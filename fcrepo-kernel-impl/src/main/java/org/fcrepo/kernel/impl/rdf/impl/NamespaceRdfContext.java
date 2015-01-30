@@ -27,8 +27,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
 import static org.fcrepo.kernel.RdfLexicon.VOAF_VOCABULARY;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.impl.utils.Uncheck.uncheck;
-import java.util.Map;
-
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -59,12 +57,12 @@ public class NamespaceRdfContext extends RdfStream {
         namespaces(stream(namespaceRegistry.getPrefixes()).filter(p -> !p.isEmpty() && !p.equals("jcr")).collect(
                         toMap(p -> p, uncheck(p -> getRDFNamespaceForJcrNamespace(namespaceRegistry.getURI(p))))));
 
-        concat(namespaces().entrySet().stream().flatMap(
+        concat(namespaces().entrySet().stream().<Triple>flatMap(
                 e -> {
                     final Node nsSubject = createURI(e.getValue());
                     return asList(create(nsSubject, type.asNode(), VOAF_VOCABULARY.asNode()),
                             create(nsSubject, HAS_NAMESPACE_PREFIX.asNode(), createLiteral(e.getKey())),
                             create(nsSubject, HAS_NAMESPACE_URI.asNode(), createLiteral(e.getValue()))).stream();
-                }));
+                }).iterator());
     }
 }

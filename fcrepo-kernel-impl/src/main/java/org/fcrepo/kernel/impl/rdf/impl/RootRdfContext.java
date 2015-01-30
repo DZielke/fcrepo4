@@ -96,7 +96,7 @@ public class RootRdfContext extends NodeRdfContext {
                             key -> repository.getDescriptor(key)));
 
             concat(descriptors.entrySet().stream().map(entry -> create(subject(), createURI(entry.getKey()),
-                    createLiteral(entry.getValue()))));
+                    createLiteral(entry.getValue()))).iterator());
 
 
             final NodeTypeManager nodeTypeManager =
