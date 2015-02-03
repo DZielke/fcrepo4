@@ -17,10 +17,10 @@ package org.fcrepo.kernel.impl.utils.iterators;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.google.common.base.Joiner;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -32,9 +32,9 @@ import javax.jcr.Session;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.RdfStreamConsumer;
+
 import org.slf4j.Logger;
 
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.hp.hpl.jena.graph.Triple;
@@ -44,6 +44,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author ajs6f
@@ -77,53 +78,25 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             final Session session, final RdfStream stream) {
         this.idTranslator = idTranslator;
         this.jcrRdfTools = new JcrRdfTools(idTranslator, session);
-        this.isFedoraSubjectTriple = new Predicate<Triple>() {
-
-            @Override
-            public boolean apply(final Triple t) {
-
-                final boolean result = idTranslator.inDomain(m.asStatement(t).getSubject())
-                        || t.getSubject().isBlank();
-                if (result) {
-                    LOGGER.debug(
-                            "Discovered a Fedora-relevant subject in triple: {}.",
-                            t);
-                } else {
-                    LOGGER.debug("Ignoring triple: {}.", t);
-                }
-                return result;
-            }
-
-        };
+        this.isFedoraSubjectTriple = t ->idTranslator.inDomain(m.asStatement(t).getSubject()) || t.getSubject().isBlank();
         // we knock out non-Fedora RDF
-        this.stream =
-                stream.withThisContext(stream.filter(isFedoraSubjectTriple));
-
+        this.stream = stream.filter(isFedoraSubjectTriple);
         this.exceptions = new ArrayList<>();
     }
 
     @Override
     public void consume() throws MalformedRdfException {
-        while (stream.hasNext()) {
-            final Statement t = m.asStatement(stream.next());
-            LOGGER.debug("Operating triple {}.", t);
-
-            try {
-                operateOnTriple(t);
-            } catch (final MalformedRdfException e) {
-                exceptions.add(e.getMessage());
-            }
-        }
-
+        stream.forEach(this);
         if (!exceptions.isEmpty()) {
-            throw new MalformedRdfException(Joiner.on("\n").join(exceptions));
+            throw new MalformedRdfException(exceptions.stream().collect(joining("\n")));
         }
     }
 
-    protected void operateOnTriple(final Statement input) throws MalformedRdfException {
+    @Override
+    public void accept(final Triple input) throws MalformedRdfException {
         try {
 
-            final Statement t = jcrRdfTools.skolemize(idTranslator, input);
+            final Statement t = jcrRdfTools.skolemize(idTranslator, m.asStatement(input));
 
             final Resource subject = t.getSubject();
             final FedoraResource subjectNode = translator().convert(subject);
@@ -132,7 +105,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             // mixins. If it isn't, treat it as a "data" property.
             if (t.getPredicate().equals(type) && t.getObject().isResource()) {
                 final Resource mixinResource = t.getObject().asResource();
-                if (!isManagedMixin.apply(mixinResource)) {
+                if (!isManagedMixin.test(mixinResource)) {
                     LOGGER.debug("Operating on node: {} with mixin: {}.",
                             subjectNode, mixinResource);
                     operateOnMixin(mixinResource, subjectNode);
@@ -145,7 +118,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                 operateOnProperty(t, subjectNode);
             }
         } catch (final RepositoryException | RepositoryRuntimeException e) {
-            throw new MalformedRdfException(e.getMessage(), e);
+            exceptions.add(new MalformedRdfException(e.getMessage(), e).getMessage());
         }
     }
 

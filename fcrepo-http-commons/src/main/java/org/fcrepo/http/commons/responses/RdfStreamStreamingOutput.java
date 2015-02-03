@@ -15,22 +15,29 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static java.util.stream.Collectors.toCollection;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
 import static org.slf4j.LoggerFactory.getLogger;
 
+
 import java.io.OutputStream;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
+
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
+
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -44,7 +51,7 @@ import org.openrdf.rio.Rio;
 import org.openrdf.rio.WriterConfig;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
+
 import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.hp.hpl.jena.graph.Node;
@@ -59,8 +66,7 @@ import com.hp.hpl.jena.graph.Triple;
 public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         StreamingOutput {
 
-    private static final Logger LOGGER =
-        getLogger(RdfStreamStreamingOutput.class);
+    private static final Logger LOGGER =  getLogger(RdfStreamStreamingOutput.class);
 
     private static ValueFactory vfactory = getInstance();
 
@@ -100,7 +106,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     public void write(final OutputStream output) {
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
-            write(asStatements(), output, format);
+            write(rdfStream.map(toStatement).collect(toCollection(ArrayList::new)), output, format);
         } catch (final RDFHandlerException e) {
             setException(e);
             LOGGER.debug("Error serializing RDF", e);
@@ -115,38 +121,27 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         final WriterConfig settings = new WriterConfig();
         final RDFWriter writer = Rio.createWriter(dataFormat, output);
         writer.setWriterConfig(settings);
-
-        for (final Map.Entry<String, String> namespace : excludeProtectedNamespaces(rdfStream.namespaces())) {
-            writer.handleNamespace(namespace.getKey(), namespace.getValue());
-        }
+        excludeProtectedNamespaces(rdfStream.namespaces()).forEach(ns ->
+        {
+            try {
+                writer.handleNamespace(ns.getKey(), ns.getValue());
+            }
+                catch (final RDFHandlerException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+            });
 
         Rio.write(model, writer);
     }
 
-    private static Iterable<Map.Entry<String, String>> excludeProtectedNamespaces(
+    private static Stream<Map.Entry<String, String>> excludeProtectedNamespaces(
             final Map<String, String> namespaces) {
         /**
          * We exclude:
          *  - xmlns, which Sesame helpfully serializes, but normal parsers may complain
          *     about in some serializations (e.g. RDF/XML where xmlns:xmlns is forbidden by XML);
          */
-        return Iterables.filter(namespaces.entrySet(), new Predicate<Map.Entry<String, String>>() {
-            @Override
-            public boolean apply(final Map.Entry<String, String> input) {
-                return !input.getKey().equals("xmlns");
-            }
-        });
-    }
-
-
-    private Iterable<Statement> asStatements() {
-        return new Iterable<Statement>() {
-
-            @Override
-            public Iterator<Statement> iterator() {
-                return rdfStream.transform(toStatement);
-            }
-        };
+        return namespaces.entrySet().stream().filter(e -> !e.getKey().equals("xmlns"));
     }
 
     protected static final Function<? super Triple, Statement> toStatement =

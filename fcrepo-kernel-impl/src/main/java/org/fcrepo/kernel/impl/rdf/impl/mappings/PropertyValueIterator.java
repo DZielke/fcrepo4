@@ -21,11 +21,13 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  * Iterate over all the values in a property or list of properties
@@ -42,6 +44,15 @@ public class PropertyValueIterator extends AbstractIterator<Value> {
      */
     public PropertyValueIterator(final Iterator<Property> properties) {
         this.properties = properties;
+        this.currentValues = null;
+    }
+
+    /**
+     * Iterate through multiple properties' values
+     * @param properties
+     */
+    public PropertyValueIterator(final Stream<Property> properties) {
+        this.properties = properties.iterator();
         this.currentValues = null;
     }
 

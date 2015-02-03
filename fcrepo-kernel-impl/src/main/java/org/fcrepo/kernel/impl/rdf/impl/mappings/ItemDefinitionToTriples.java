@@ -15,20 +15,20 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
-import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.ItemDefinition;
 import javax.jcr.nodetype.NodeType;
-import java.util.Iterator;
 
-import static com.google.common.base.Throwables.propagate;
+import java.util.function.Function;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
@@ -49,11 +49,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @param <T> the property of T
  */
-public class ItemDefinitionToTriples<T extends ItemDefinition> implements Function<T, Iterator<Triple>> {
+public class ItemDefinitionToTriples<T extends ItemDefinition> implements Function<T, RdfStream> {
 
     private static final Logger LOGGER = getLogger(ItemDefinitionToTriples.class);
 
-    private Node context;
+    private final Node context;
 
     /**
      * Translate ItemDefinitions into triples. The definitions will hang off
@@ -65,21 +65,20 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
     }
 
     @Override
-    public Iterator<Triple> apply(final T input) {
+    public RdfStream apply(final T input) {
 
         try {
             final Node propertyDefinitionNode = getResource(input).asNode();
 
-            LOGGER.trace("Adding triples for nodeType: {} with child nodes: {}",
-                         context.getURI(),
-                         propertyDefinitionNode.getURI());
+            LOGGER.trace("Adding triples for nodeType: {} with child nodes: {}", context.getURI(),
+                    propertyDefinitionNode.getURI());
 
             return new RdfStream(
                     create(propertyDefinitionNode, type.asNode(), Property.asNode()),
                     create(propertyDefinitionNode, domain.asNode(), context),
                     create(propertyDefinitionNode, label.asNode(), createLiteral(input.getName())));
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 

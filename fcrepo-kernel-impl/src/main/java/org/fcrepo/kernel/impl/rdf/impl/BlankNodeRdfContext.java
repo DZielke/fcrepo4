@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-
+import org.fcrepo.kernel.impl.utils.UncheckedFunction;
+import org.fcrepo.kernel.impl.utils.UncheckedPredicate;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -34,13 +30,17 @@ import javax.jcr.Value;
 
 import java.util.Iterator;
 import java.util.List;
-
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
+import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
 
 /**
  * Embed all blank nodes in the RDF stream
@@ -51,7 +51,7 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
  */
 public class BlankNodeRdfContext extends NodeRdfContext {
 
-    private static final List<Integer> referencePropertyTypes = asList(PATH,REFERENCE,WEAKREFERENCE);
+    private static final List<Integer> referencePropertyTypes = asList(PATH, REFERENCE, WEAKREFERENCE);
 
     /**
      * Default constructor.
@@ -61,62 +61,37 @@ public class BlankNodeRdfContext extends NodeRdfContext {
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public BlankNodeRdfContext(final FedoraResource resource,
-                               final IdentifierConverter<Resource, FedoraResource> idTranslator)
+            final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
 
-        concat(Iterators.concat(Iterators.transform(getBlankNodesIterator(), new Function<Node, RdfStream>() {
-            @Override
-            public RdfStream apply(final Node node) {
-                final FedoraResource resource = nodeConverter.convert(node);
+        concat(getBlankNodesIterator().flatMap(node -> {
+            final FedoraResource res = nodeConverter.convert(node);
 
-                return resource.getTriples(idTranslator, ImmutableList.of(TypeRdfContext.class,
-                        PropertiesRdfContext.class,
-                        BlankNodeRdfContext.class));
-            }
-        })));
-
+            return res.getTriples(idTranslator, of(TypeRdfContext.class,
+                    PropertiesRdfContext.class,
+                    BlankNodeRdfContext.class));
+        }
+                ));
     }
 
-    private Iterator<Node> getBlankNodesIterator() throws RepositoryException {
-        final Iterator<Property> properties = resource().getNode().getProperties();
-
-        final Iterator<Property> references = Iterators.filter(properties, filterReferenceProperties);
-
-        final Iterator<Node> nodes = Iterators.transform(new PropertyValueIterator(references), getNodesForValue);
-
-        return Iterators.filter(nodes, isBlankNode);
+    private Stream<Node> getBlankNodesIterator() throws RepositoryException {
+        final Iterator<Property> propertiesIterator = resource().getNode().getProperties();
+        final Stream<Property> references = fromIterator(propertiesIterator).filter(filterReferenceProperties);
+        return fromIterator(new PropertyValueIterator(references)).map(getNodesForValue).filter(isBlankNode);
     }
 
+    private static final Predicate<Property> filterReferenceProperties = UncheckedPredicate
+            .uncheck(p -> referencePropertyTypes.contains(p.getType()));
 
-    private static final Predicate<Property> filterReferenceProperties = new Predicate<Property>() {
-
-        @Override
-        public boolean apply(final Property property) {
-            try {
-                final int type = property.getType();
-                return referencePropertyTypes.contains(type);
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
+    private final Function<Value, Node> getNodesForValue = UncheckedFunction.uncheck(v -> {
+        final Node refNode;
+        if (v.getType() == PATH) {
+            refNode = resource().getNode().getSession().getNode(v.getString());
+        } else {
+            refNode = resource().getNode().getSession().getNodeByIdentifier(v.getString());
         }
-    };
-
-    private final Function<Value, Node> getNodesForValue = new Function<Value, Node>() {
-        @Override
-        public Node apply(final Value v) {
-            try {
-                final Node refNode;
-                if (v.getType() == PATH) {
-                    refNode = resource().getNode().getSession().getNode(v.getString());
-                } else {
-                    refNode = resource().getNode().getSession().getNodeByIdentifier(v.getString());
-                }
-                return refNode;
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
-    };
+        return refNode;
+    });
 
 }

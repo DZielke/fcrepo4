@@ -40,9 +40,13 @@ import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.Transformation;
 import org.fcrepo.transform.TransformationFactory;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  * <p>FedoraTransformTest class.</p>
@@ -91,8 +95,18 @@ public class FedoraTransformTest {
 
     @Test
     public void testEvaluateTransform() {
-        final RdfStream stream = new RdfStream();
-        when(mockResource.getTriples(any(IdentifierConverter.class), any(Class.class))).thenReturn(stream);
+        when(mockResource.getTriples(any(IdentifierConverter.class), any(Iterable.class))).thenAnswer(new Answer<RdfStream>(){
+
+            @Override
+            public RdfStream answer(final InvocationOnMock invocation) {
+                return new RdfStream();
+            }});
+        when(mockResource.getTriples(any(IdentifierConverter.class), any(Class.class))).thenAnswer(new Answer<RdfStream>(){
+
+            @Override
+            public RdfStream answer(final InvocationOnMock invocation) {
+                return new RdfStream();
+            }});
 
         final InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
                 "{\n" +

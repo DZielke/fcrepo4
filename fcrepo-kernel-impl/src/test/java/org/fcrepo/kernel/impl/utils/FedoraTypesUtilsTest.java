@@ -190,20 +190,20 @@ public class FedoraTypesUtilsTest {
     public void testIsInternalReferenceProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.REFERENCE);
         when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
-        assertTrue(isInternalReferenceProperty.apply(mockProperty));
+        assertTrue(isInternalReferenceProperty.test(mockProperty));
     }
 
     @Test (expected = RepositoryRuntimeException.class)
     public void testIsInternalReferencePropertyException() throws RepositoryException {
         when(mockProperty.getType()).thenThrow(new RepositoryException());
-        assertTrue(isInternalReferenceProperty.apply(mockProperty));
+        assertTrue(isInternalReferenceProperty.test(mockProperty));
     }
 
     @Test
     public void testIsInternalReferencePropertyWeak() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.WEAKREFERENCE);
         when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
-        assertTrue(isInternalReferenceProperty.apply(mockProperty));
+        assertTrue(isInternalReferenceProperty.test(mockProperty));
     }
 
     @Test
@@ -236,7 +236,7 @@ public class FedoraTypesUtilsTest {
     public void testIsInternalProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
-        assertTrue(isInternalProperty.apply(mockProperty));
+        assertTrue(isInternalProperty.test(mockProperty));
     }
 
     @Test
@@ -255,10 +255,10 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsBlanknode() throws RepositoryException {
         when(mockNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(true);
-        assertTrue("Expected to be a blank node", isBlankNode.apply(mockNode));
+        assertTrue("Expected to be a blank node", isBlankNode.test(mockNode));
 
         when(mockNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(false);
-        assertFalse("Expected to not be a blank node", isBlankNode.apply(mockNode));
+        assertFalse("Expected to not be a blank node", isBlankNode.test(mockNode));
     }
 
     @Test
@@ -266,16 +266,16 @@ public class FedoraTypesUtilsTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.isNodeType("mode:system")).thenReturn(true);
         assertTrue("mode:system nodes should be treated as internal nodes!",
-                isInternalNode.apply(mockNode));
+                isInternalNode.test(mockNode));
 
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.isNodeType("mode:system")).thenReturn(false);
         assertFalse("Nodes that are not mode:system types should not be "
-                + "treated as internal nodes!", isInternalNode.apply(mockNode));
+                + "treated as internal nodes!", isInternalNode.test(mockNode));
 
         when(mockNode.isNodeType("mode:system")).thenThrow(new RepositoryException());
         try {
-            isInternalNode.apply(mockNode);
+            isInternalNode.test(mockNode);
             fail("Unexpected completion of FedoraTypesUtils.isInternalNode" +
                  " after RepositoryException!");
         } catch (final RuntimeException e) {
@@ -289,14 +289,14 @@ public class FedoraTypesUtilsTest {
         when(mockNode.isNodeType(anyString())).thenThrow(new RepositoryException());
 
         try {
-            isContainer.apply(mockNode);
+            isContainer.test(mockNode);
             fail("Unexpected FedoraTypesUtils.isContainer" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {
             // expected
         }
         try {
-            isNonRdfSourceDescription.apply(mockNode);
+            isNonRdfSourceDescription.test(mockNode);
             fail("Unexpected FedoraTypesUtils.isNonRdfSourceDescription" +
                  " completion after RepositoryException!");
         } catch (final RuntimeException e) {

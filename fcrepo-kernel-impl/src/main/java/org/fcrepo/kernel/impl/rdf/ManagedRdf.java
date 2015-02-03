@@ -19,7 +19,8 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
 
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
+
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -40,24 +41,9 @@ public final class ManagedRdf {
     private ManagedRdf() {
     }
 
-    public static final Predicate<Triple> isManagedTriple =
-        new Predicate<Triple>() {
+    public static final Predicate<Triple> isManagedTriple = t -> isManagedPredicate.apply(model.asStatement(t)
+            .getPredicate());
 
-            @Override
-            public boolean apply(final Triple t) {
-                return isManagedPredicate.apply(model.asStatement(t)
-                        .getPredicate());
-            }
+    public static final Predicate<Resource> isManagedMixin = m -> isManagedNamespace.apply(m.getNameSpace());
 
-        };
-
-    public static final Predicate<Resource> isManagedMixin =
-        new Predicate<Resource>() {
-
-            @Override
-            public boolean apply(final Resource m) {
-                return isManagedNamespace.apply(m.getNameSpace());
-            }
-
-        };
 }

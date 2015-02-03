@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.utils.iterators;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 import com.google.common.collect.AbstractIterator;
 import com.hp.hpl.jena.graph.Graph;
@@ -36,11 +37,11 @@ import static com.hp.hpl.jena.sparql.graph.GraphFactory.createDefaultGraph;
  */
 public class GraphDifferencingIterator extends AbstractIterator<Triple> {
 
-    private Graph notCommon;
+    private final Graph notCommon;
 
-    private Graph common;
+    private final Graph common;
 
-    private Iterator<Triple> source;
+    private final Iterator<Triple> source;
 
     /**
      * Diff a Model against a stream of triples
@@ -51,6 +52,17 @@ public class GraphDifferencingIterator extends AbstractIterator<Triple> {
     public GraphDifferencingIterator(final Model replacement,
                                      final Iterator<Triple> original) {
         this(replacement.getGraph(), original);
+    }
+
+    /**
+     * Diff a Model against a stream of triples
+     *
+     * @param replacement
+     * @param original
+     */
+    public GraphDifferencingIterator(final Model replacement,
+                                     final Stream<Triple> original) {
+        this(replacement.getGraph(), original.iterator());
     }
 
     /**
@@ -65,7 +77,20 @@ public class GraphDifferencingIterator extends AbstractIterator<Triple> {
         this.notCommon = replacement;
         this.common = createDefaultGraph();
         this.source = original;
+    }
 
+    /**
+     * Diff a graph against a stream of triples
+     *
+     * @param replacement
+     * @param original
+     */
+    public GraphDifferencingIterator(final Graph replacement,
+                                     final Stream<Triple> original) {
+        super();
+        this.notCommon = replacement;
+        this.common = createDefaultGraph();
+        this.source = original.iterator();
     }
 
     @Override

@@ -15,28 +15,30 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
 
+import static com.google.common.collect.ImmutableList.of;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/9/14
  */
 public class HashRdfContext extends NodeRdfContext {
 
+
+    private static final List<Class<? extends NodeRdfContext>> TRIPLE_GENERATORS = of(TypeRdfContext.class, PropertiesRdfContext.class, BlankNodeRdfContext.class);
 
     /**
      * Default constructor.
@@ -46,24 +48,15 @@ public class HashRdfContext extends NodeRdfContext {
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public HashRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
+            final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
 
         final Node node = resource().getNode();
         if (node.hasNode("#")) {
-            final Iterator<Node> hashChildrenNodes = node.getNode("#").getNodes();
-            concat(Iterators.concat(Iterators.transform(hashChildrenNodes,
-                    new Function<Node, Iterator<Triple>>() {
-                        @Override
-                        public Iterator<Triple> apply(final Node input) {
-                            final FedoraResource resource = nodeConverter.convert(input);
-
-                            return resource.getTriples(idTranslator, ImmutableList.of(TypeRdfContext.class,
-                                    PropertiesRdfContext.class,
-                                    BlankNodeRdfContext.class));
-                        }
-                    })));
+            final Iterator<Node> hashChildrenNodesIterator = node.getNode("#").getNodes();
+            final Stream<Node> hashChildren = fromIterator(hashChildrenNodesIterator);
+            concat(hashChildren.flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator, TRIPLE_GENERATORS)));
         }
     }
 }

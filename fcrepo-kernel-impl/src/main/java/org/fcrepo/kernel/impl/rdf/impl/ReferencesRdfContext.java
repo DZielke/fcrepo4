@@ -15,9 +15,10 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
+import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
@@ -30,6 +31,7 @@ import java.util.Iterator;
  * Accumulate inbound references to a given resource
  *
  * @author cabeer
+ * @author ajs6f
  */
 public class ReferencesRdfContext extends NodeRdfContext {
 
@@ -47,22 +49,10 @@ public class ReferencesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
-        property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        concat(putStrongReferencePropertiesIntoContext());
-        concat(putWeakReferencePropertiesIntoContext());
+        this.property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
+        final Iterator<Property> strongRefs = resource().getNode().getReferences();
+        concat(fromIterator(strongRefs).flatMap(property2triple));
+        final Iterator<Property> weakRefs = resource().getNode().getWeakReferences();
+        concat(fromIterator(weakRefs).flatMap(property2triple));
     }
-
-    private Iterator<Triple> putWeakReferencePropertiesIntoContext() throws RepositoryException {
-        final Iterator<Property> properties = resource().getNode().getWeakReferences();
-
-        return Iterators.concat(Iterators.transform(properties, property2triple));
-    }
-
-    private Iterator<Triple> putStrongReferencePropertiesIntoContext() throws RepositoryException {
-        final Iterator<Property> properties = resource().getNode().getReferences();
-
-        return Iterators.concat(Iterators.transform(properties, property2triple));
-
-    }
-
 }

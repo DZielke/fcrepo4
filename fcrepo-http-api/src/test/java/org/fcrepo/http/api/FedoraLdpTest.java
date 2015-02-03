@@ -203,7 +203,15 @@ public class FedoraLdpTest {
                         ));
             }
         });
-
+        when(mockResource.getTriples(eq(idTranslator), any(Iterable.class))).thenAnswer(new Answer<RdfStream>() {
+            @Override
+            public RdfStream answer(final InvocationOnMock invocationOnMock) {
+                return new RdfStream(Triple.create(createURI(invocationOnMock.getMock().toString()),
+                                                   createURI("called"),
+                                                   createURI(invocationOnMock.getArguments()[1].toString())
+                        ));
+            }
+        });
         return mockResource;
     }
 

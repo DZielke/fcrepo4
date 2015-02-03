@@ -25,7 +25,6 @@ import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDFS.range;
-import static java.util.Collections.emptyIterator;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
@@ -41,7 +40,6 @@ import static javax.jcr.PropertyType.nameFromValue;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
@@ -58,6 +56,7 @@ import com.hp.hpl.jena.graph.Triple;
 /**
  * Utility for moving Property Definitions into RDFS triples
  * @author cbeer
+ * @author ajs6f
  */
 public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<PropertyDefinition> {
 
@@ -96,7 +95,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
     }
 
     @Override
-    public Iterator<Triple> apply(final PropertyDefinition input) {
+    public RdfStream apply(final PropertyDefinition input) {
 
         if (!input.getName().contains(":")) {
             LOGGER.debug("Received property definition with no namespace: {}",
@@ -104,7 +103,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
             LOGGER.debug("This cannot be serialized into several RDF formats, " +
                                  "so we assume it is internal and discard it.");
             // TODO find a better way...
-            return emptyIterator();
+            return new RdfStream();
         }
 
         try {

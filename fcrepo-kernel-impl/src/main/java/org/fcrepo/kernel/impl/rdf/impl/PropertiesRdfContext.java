@@ -15,11 +15,12 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.google.common.base.Predicates.not;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
+import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -29,12 +30,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
-
 import org.slf4j.Logger;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
-import com.hp.hpl.jena.graph.Triple;
 
 /**
  * {@link NodeRdfContext} for RDF that derives from JCR properties on a Resource
@@ -60,19 +56,10 @@ public class PropertiesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
-        property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        concat(triplesFromProperties(resource()));
+        this.property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
+        LOGGER.trace("Creating triples for node: {}", resource());
+        final Iterator<Property> propertiesIterator = resource().getNode().getProperties();
+        final Stream<Property> properties = fromIterator(propertiesIterator).filter(isInternalProperty.negate());
+        concat(properties.flatMap(property2triple));
     }
-
-    private Iterator<Triple> triplesFromProperties(final FedoraResource n)
-        throws RepositoryException {
-        LOGGER.trace("Creating triples for node: {}", n);
-        final Iterator<Property> allProperties = n.getNode().getProperties();
-        final UnmodifiableIterator<Property> properties =
-            Iterators.filter(allProperties, not(isInternalProperty));
-
-        return Iterators.concat(Iterators.transform(properties, property2triple));
-
-    }
-
 }

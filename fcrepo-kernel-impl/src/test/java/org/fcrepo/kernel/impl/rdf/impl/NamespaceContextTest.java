@@ -25,6 +25,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.util.function.Predicate;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
@@ -32,13 +34,14 @@ import javax.jcr.Workspace;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
+
 import org.fcrepo.kernel.RdfLexicon;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 
-import com.google.common.base.Predicate;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
@@ -64,7 +67,7 @@ public class NamespaceContextTest {
         when(mockNamespaceRegistry.getURI("")).thenReturn(
                 "GARBAGE URI FOR FAKE NAMESPACE, SHOULD NEVER BE PARSED");
         when(mockNamespaceRegistry.getURI(prefix)).thenReturn(testUri);
-        assertTrue(any(new NamespaceRdfContext(mockSession), hasTestUriAsObject));
+        assertTrue(new NamespaceRdfContext(mockSession).anyMatch(hasTestUriAsObject));
     }
 
     @Test
@@ -139,7 +142,7 @@ public class NamespaceContextTest {
         new Predicate<Triple>() {
 
             @Override
-            public boolean apply(final Triple t) {
+            public boolean test(final Triple t) {
                 return t.objectMatches(createLiteral(testUri));
             }
         };

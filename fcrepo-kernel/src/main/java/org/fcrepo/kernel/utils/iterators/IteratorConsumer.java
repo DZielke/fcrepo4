@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.utils.iterators;
 
+import java.util.function.Consumer;
+
 import com.google.common.util.concurrent.ListenableFuture;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 
@@ -22,13 +24,13 @@ import org.fcrepo.kernel.exception.MalformedRdfException;
  * Implemented by something that can consume an {@link java.util.Iterator}. The
  * assumption is that a reference to the appropriate iterator is managed as part
  * of the state of any implementation.
- * 
+ *
  * @author ajs6f
  * @since Oct 24, 2013
  * @param <E> E
  * @param <T> T
  */
-public interface IteratorConsumer<E, T> {
+public interface IteratorConsumer<E, T> extends Consumer<E>{
 
     /**
      * Synchronous consumption.

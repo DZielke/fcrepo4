@@ -16,11 +16,15 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -34,11 +38,12 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author cbeer
+ * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ReferencesRdfContextTest {
 
     @Mock
@@ -48,33 +53,22 @@ public class ReferencesRdfContextTest {
     private FedoraResource mockResource;
 
     @Mock
-    private Node mockNode;
+    private Node mockNode, mockPropertyParent;
 
     private DefaultIdentifierTranslator translator;
 
     private ReferencesRdfContext testObj;
-    private javax.jcr.PropertyIterator weakReferencesProperties;
-    private javax.jcr.PropertyIterator strongReferencesProperties;
+
+    private javax.jcr.PropertyIterator weakReferencesProperties, strongReferencesProperties;
 
     @Mock
-    private Property mockWeakProperty;
+    private Property mockWeakProperty, mockStrongProperty;
 
     @Mock
-    private Property mockStrongProperty;
-
-    @Mock
-    private Node mockPropertyParent;
-
-    @Mock
-    private Value mockWeakValue;
-
-    @Mock
-    private Value mockStrongValue;
-
+    private Value mockWeakValue, mockStrongValue;
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         translator = new DefaultIdentifierTranslator(mockSession);
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockResource.getPath()).thenReturn("/a");

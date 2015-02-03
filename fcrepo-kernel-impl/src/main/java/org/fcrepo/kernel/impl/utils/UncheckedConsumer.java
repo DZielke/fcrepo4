@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 DuraSpace, Inc.
+ * Copyright 2015 DuraSpace, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,45 +16,38 @@
 
 package org.fcrepo.kernel.impl.utils;
 
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 
-/**
- * We often need to use {@link Function}s that wrap methods that throw {@link RepositoryException}. This does that.
- *
- * @author ajs6f
- */
-@FunctionalInterface
-public interface Uncheck<T, R> extends Function<T, R> {
+public interface UncheckedConsumer<T> extends Consumer<T> {
 
     @Override
-    default R apply(final T elem) {
+    default void accept(final T elem) {
         try {
-            return applyThrows(elem);
+            acceptThrows(elem);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
-    R applyThrows(T elem) throws RepositoryException;
+    void acceptThrows(T elem) throws RepositoryException;
 
-    static <T, R> Uncheck<T, R> uncheck(final ThrowingLambda<T, R> f) {
-        return new Uncheck<T, R>() {
+    static <T> UncheckedConsumer<T> uncheck(final ThrowingConsumer<T> c) {
+        return new UncheckedConsumer<T>() {
 
             @Override
-            public R applyThrows(final T elem) throws RepositoryException {
-                return f.apply(elem);
+            public void acceptThrows(final T elem) throws RepositoryException {
+                c.accept(elem);
             }
         };
 
     }
 
     @FunctionalInterface
-    public static interface ThrowingLambda<T, R> {
-
-        R apply(T element) throws RepositoryException;
+    public static interface ThrowingConsumer<T> {
+        void accept(T element) throws RepositoryException;
     }
 }

@@ -77,7 +77,7 @@ public class PropertyToTripleTest {
         when(mockValue.getType()).thenReturn(STRING);
         when(mockValue2.getString()).thenReturn(TEST_VALUE);
         when(mockValue2.getType()).thenReturn(STRING);
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty).iterator();
         final Triple t1 = ts.next();
         LOGGER.debug("Constructed triple: {}", t1);
         final Triple t2 = ts.next();
@@ -107,7 +107,7 @@ public class PropertyToTripleTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getString()).thenReturn(TEST_NODE_PATH);
         when(mockValue.getType()).thenReturn(PATH);
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty).iterator();
         final Triple t = ts.next();
         LOGGER.debug("Constructed triple: {}", t);
         assertEquals("Got wrong RDF object!", testSubject, t
@@ -257,7 +257,7 @@ public class PropertyToTripleTest {
         when(mockValue.getType()).thenReturn(PATH);
         when(mockValue2.getString()).thenReturn(TEST_NODE_PATH);
         when(mockValue2.getType()).thenReturn(PATH);
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty).iterator();
         final Triple t1 = ts.next();
         LOGGER.debug(
                 "Constructed triple for testMultiValuedResourceTriple(): {}",
@@ -299,7 +299,7 @@ public class PropertyToTripleTest {
         when(mockSession.getNodeByIdentifier(TEST_NODE_PATH)).thenReturn(
                 mockNode);
 
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty).iterator();
         final Triple t1 = ts.next();
         LOGGER.debug(
                 "Constructed triple for testMultiValuedResourceTriple(): {}",
@@ -339,7 +339,7 @@ public class PropertyToTripleTest {
 
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getValue()).thenReturn(mockValue);
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty).iterator();
         final Triple t = ts.next();
         LOGGER.debug("Constructed triple: {}", t);
         return t;

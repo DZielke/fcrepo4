@@ -15,22 +15,22 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 
-import java.util.Iterator;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -49,45 +49,27 @@ public class ChildrenRdfContext extends NodeRdfContext {
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public ChildrenRdfContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> idTranslator)
+            final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
 
         if (resource.getNode().hasNodes()) {
             LOGGER.trace("Found children of this resource.");
-            concat(childrenContext());
+            final Stream<FedoraResource> children = fromIterator(resource().getChildren());
+            concat(children.map(child2triples));
         }
     }
 
-
-    private Iterator<Triple> childrenContext() {
-
-        final Iterator<FedoraResource> niceChildren = resource().getChildren();
-
-        return Iterators.concat(Iterators.transform(niceChildren, child2triples()));
-    }
-
-    private Function<FedoraResource, Iterator<Triple>> child2triples() {
-        return new Function<FedoraResource, Iterator<Triple>>() {
-
-            @Override
-            public Iterator<Triple> apply(final FedoraResource child) {
-
-                final com.hp.hpl.jena.graph.Node childSubject;
-
-                if (child instanceof NonRdfSourceDescription) {
-                    childSubject = translator().reverse()
-                            .convert(((NonRdfSourceDescription) child).getDescribedResource())
-                            .asNode();
-                } else {
-                    childSubject = translator().reverse().convert(child).asNode();
-                }
-                LOGGER.trace("Creating triples for child node: {}", child);
-                final RdfStream childStream = new RdfStream();
-                childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
-                return childStream;
-            }
-        };
-    }
-
+    private final Function<FedoraResource, Triple> child2triples = child -> {
+        final FedoraResource describedThing;
+        if (child instanceof NonRdfSourceDescription) {
+            final NonRdfSourceDescription description = (NonRdfSourceDescription) child;
+            describedThing = description.getDescribedResource();
+        } else {
+            describedThing = child;
+        }
+        final com.hp.hpl.jena.graph.Node childSubject = translator().reverse().convert(describedThing).asNode();
+        LOGGER.trace("Creating triples for child node: {}", child);
+        return create(subject(), CONTAINS.asNode(), childSubject);
+    };
 }

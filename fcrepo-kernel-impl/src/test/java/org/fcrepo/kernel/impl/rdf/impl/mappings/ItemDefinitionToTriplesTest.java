@@ -64,7 +64,7 @@ public class ItemDefinitionToTriplesTest {
     private NamespacedNodeType mockNodeType;
 
     @Mock
-    private Node mockRDFNode = createURI("mock:domain");
+    private final Node mockRDFNode = createURI("mock:domain");
 
     @Before
     public void setUp() throws RepositoryException {
@@ -77,7 +77,7 @@ public class ItemDefinitionToTriplesTest {
     @Test
     public void testGoodDefinition() throws RepositoryException {
         final Set<Triple> results =
-            copyOf(testMapper.apply(mockItemDefinition));
+            copyOf(testMapper.apply(mockItemDefinition).iterator());
         LOGGER.debug("Created RDF: ");
         for (final Triple t : results) {
             LOGGER.debug("{}", t);

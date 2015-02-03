@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -39,6 +40,7 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -62,7 +64,7 @@ public class PersistingRdfStreamConsumerTest {
     @Test
     public void testConsumeAsync() {
 
-        final RdfStream testStream = new RdfStream(profferedStatements);
+        final RdfStream testStream = new RdfStream(Arrays.stream(profferedStatements).map(s -> s.asTriple()));
 
         final Set<Statement> rejectedStatements =
             newHashSet(profferedStatements);

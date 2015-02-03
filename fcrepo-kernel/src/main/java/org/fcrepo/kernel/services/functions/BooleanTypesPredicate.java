@@ -24,16 +24,17 @@ import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2st
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 
 /**
  * Base class for matching sets of node types
  * @author armintor@gmail.com
+ * @author ajs6f
  *
  */
 public abstract class BooleanTypesPredicate implements Predicate<Node> {
@@ -49,7 +50,7 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
     }
 
     @Override
-    public boolean apply(final Node input) {
+    public boolean test(final Node input) {
         if (input == null) {
             throw new IllegalArgumentException(
                     "null node passed to" + getClass().getName()
@@ -76,7 +77,7 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
                     }
                 }
             }
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw propagate(e);
         }
         return test(matched);

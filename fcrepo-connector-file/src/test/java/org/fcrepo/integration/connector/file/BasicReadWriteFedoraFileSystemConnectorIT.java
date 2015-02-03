@@ -19,6 +19,8 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.jcr.PathNotFoundException;
@@ -34,6 +36,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Mike Durbin
  */
+@Ignore
 public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFileSystemConnectorIT {
 
     @Override

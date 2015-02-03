@@ -94,7 +94,7 @@ public class RootRdfContext extends NodeRdfContext {
                     .filter(key -> nonNull(repository.getDescriptor(key)))
                     .collect(toMap((key) -> REPOSITORY_NAMESPACE + "repository." + key,
                             key -> repository.getDescriptor(key)));
-
+            LOGGER.debug("Using repository descriptors: {}", descriptors);
             concat(descriptors.entrySet().stream().map(entry -> create(subject(), createURI(entry.getKey()),
                     createLiteral(entry.getValue()))).iterator());
 

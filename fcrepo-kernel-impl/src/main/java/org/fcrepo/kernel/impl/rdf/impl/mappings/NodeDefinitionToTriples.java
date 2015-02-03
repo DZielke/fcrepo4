@@ -16,15 +16,12 @@
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
-import java.util.Iterator;
-
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDFS.range;
@@ -48,7 +45,7 @@ public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinit
     }
 
     @Override
-    public Iterator<Triple> apply(final NodeDefinition input) {
+    public RdfStream apply(final NodeDefinition input) {
 
         try {
 
