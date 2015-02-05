@@ -75,7 +75,7 @@ public class ItemDefinitionToTriplesTest {
     }
 
     @Test
-    public void testGoodDefinition() throws RepositoryException {
+    public void testGoodDefinition() {
         final Set<Triple> results =
             copyOf(testMapper.apply(mockItemDefinition).iterator());
         LOGGER.debug("Created RDF: ");

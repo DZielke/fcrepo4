@@ -55,14 +55,16 @@ public class NodeRdfContext extends RdfStream {
                           final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super();
         this.resource = resource;
-        try {
-            final Node node = resource().getNode();
-            if (nonNull(node)) {
+
+        final Node node = resource().getNode();
+        if (nonNull(node)) {
+            try {
                 session(node.getSession());
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
             }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
         }
+
         this.idTranslator = idTranslator;
         this.subject = idTranslator.reverse().convert(resource).asNode();
     }

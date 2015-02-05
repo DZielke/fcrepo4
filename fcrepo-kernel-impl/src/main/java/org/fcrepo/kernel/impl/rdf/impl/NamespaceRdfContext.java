@@ -19,7 +19,6 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
@@ -28,6 +27,7 @@ import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamesp
 import static org.fcrepo.kernel.impl.utils.UncheckedFunction.uncheck;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
@@ -59,12 +59,12 @@ public class NamespaceRdfContext extends RdfStream {
         namespaces(Arrays.stream(namespaceRegistry.getPrefixes()).filter(p -> !p.isEmpty() && !p.equals("jcr")).collect(
                         toMap(p -> p, uncheck(p -> getRDFNamespaceForJcrNamespace(namespaceRegistry.getURI(p))))));
 
-        concat(namespaces().entrySet().stream().<Triple>flatMap(
+        concat(namespaces().entrySet().stream().flatMap(
                 e -> {
                     final Node nsSubject = createURI(e.getValue());
-                    return asList(create(nsSubject, type.asNode(), VOAF_VOCABULARY.asNode()),
+                    return Stream.of(create(nsSubject, type.asNode(), VOAF_VOCABULARY.asNode()),
                             create(nsSubject, HAS_NAMESPACE_PREFIX.asNode(), createLiteral(e.getKey())),
-                            create(nsSubject, HAS_NAMESPACE_URI.asNode(), createLiteral(e.getValue()))).stream();
-                }).iterator());
+                            create(nsSubject, HAS_NAMESPACE_URI.asNode(), createLiteral(e.getValue())));
+                }));
     }
 }

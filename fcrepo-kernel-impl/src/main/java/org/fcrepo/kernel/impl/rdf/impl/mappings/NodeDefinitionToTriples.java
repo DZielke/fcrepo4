@@ -51,6 +51,7 @@ public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinit
 
         if (requiredPrimaryTypes.length > 1) {
             // TODO we can express this as an OWL unionOf. But should we?
+            // TODO ajs6f replies: why would we not just emit multiple type triples instead of using OWL?
             LOGGER.trace(
                     "Skipping RDFS:range for {} with multiple primary types",
                     propertyDefinitionNode.getName());
