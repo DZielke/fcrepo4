@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 public class Streams {
 
     public static <T> Stream<T> fromIterator(final Iterator<T> i) {
-        return stream(spliteratorUnknownSize(i, 0), true);
+        return stream(spliteratorUnknownSize(i, 0), false);
     }
 
 }

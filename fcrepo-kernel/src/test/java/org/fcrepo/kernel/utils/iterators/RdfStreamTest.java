@@ -23,15 +23,14 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.kernel.utils.iterators.RdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import javax.jcr.Session;
 
@@ -190,74 +189,6 @@ public class RdfStreamTest {
         assertEquals("Didn't find triple in stream from Model!", triple, testStream.findFirst().get());
         assertEquals("Didn't find namespace mapping in stream from Model!", singletonMap(prefix1, uri1), testStream
                 .namespaces());
-    }
-
-    @Test
-    public void testLimit() {
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.next()).thenReturn(triple);
-        final Iterator<Triple> testIterator = testStream.limit(2).iterator();
-        testIterator.next();
-        testIterator.next();
-        assertFalse(testIterator.hasNext());
-    }
-
-    @Test
-    public void testSkip() {
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        testStream = testStream.skip(3);
-        assertFalse(testStream.findFirst().isPresent());
-    }
-
-    @Test
-    public void testFilter() {
-        final Predicate<Triple> predicate = new Predicate<Triple>() {
-
-            @Override
-            public boolean test(final Triple t) {
-                return t.equals(triple);
-            }
-
-        };
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.next()).thenReturn(triple1, triple2, triple);
-        testStream = testStream.filter(predicate);
-        assertEquals(triple, testStream.findFirst().get());
-    }
-
-    @Test
-    public void testMap() {
-
-        final String oneResult = "One result";
-
-        final String otherResult = "The other result";
-
-        final Function<Triple, String> f = new Function<Triple, String>() {
-
-            @Override
-            public String apply(final Triple t) {
-                return t.equals(triple) ? oneResult : otherResult;
-            }
-
-        };
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.next()).thenReturn(triple1, triple2, triple);
-        final Iterator<String> testIterator = testStream.map(f).iterator();
-        assertEquals(otherResult, testIterator.next());
-        assertEquals(otherResult, testIterator.next());
-        assertEquals(oneResult, testIterator.next());
-    }
-
-    @Test
-    public void testCanContinue() {
-        when(mockIterator.hasNext()).thenReturn(true).thenThrow(
-                new RuntimeException("Expected.")).thenReturn(true);
-        assertTrue(mockIterator.hasNext());
-        try {
-            mockIterator.hasNext();
-        } catch (final RuntimeException ex) {
-        }
-        assertTrue("Couldn't continue with iteration!", mockIterator.hasNext());
     }
 
     @Test

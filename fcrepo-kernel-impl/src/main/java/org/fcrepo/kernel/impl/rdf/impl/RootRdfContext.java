@@ -40,8 +40,10 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.metrics.RegistryService;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -90,7 +92,7 @@ public class RootRdfContext extends NodeRdfContext {
             LOGGER.trace("Creating RDF triples for repository description");
             final Repository repository = resource().getNode().getSession().getRepository();
 
-            final Map<String, String> descriptors = stream(repository.getDescriptorKeys())
+            final Map<String, String> descriptors = Arrays.stream(repository.getDescriptorKeys())
                     .filter(key -> nonNull(repository.getDescriptor(key)))
                     .collect(toMap((key) -> REPOSITORY_NAMESPACE + "repository." + key,
                             key -> repository.getDescriptor(key)));
@@ -103,7 +105,7 @@ public class RootRdfContext extends NodeRdfContext {
                     resource().getNode().getSession().getWorkspace().getNodeTypeManager();
             @SuppressWarnings("unchecked")
             final Stream<NodeType> nodeTypes =
-                    stream(spliteratorUnknownSize(nodeTypeManager.getAllNodeTypes(), IMMUTABLE), true);
+                    StreamSupport.stream(spliteratorUnknownSize(nodeTypeManager.getAllNodeTypes(), IMMUTABLE), true);
             concat(nodeTypes.map(type -> create(subject(), HAS_NODE_TYPE.asNode(), createLiteral(type.getName()))));
 
             /*

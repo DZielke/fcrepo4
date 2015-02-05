@@ -29,6 +29,7 @@ import javax.jcr.nodetype.ItemDefinition;
 import javax.jcr.nodetype.NodeType;
 
 import java.util.function.Function;
+
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
@@ -91,17 +92,17 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      * @return a resource for the given Namespaced JCR object
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
-    public static Resource getResource(final Namespaced namespacedObject)
-        throws RepositoryException {
+    public static Resource getResource(final Namespaced namespacedObject) {
         // TODO find a better way to create an explicitly-namespaced resource
         // if Jena offers one, since this isn't actually a Property
-        LOGGER.trace("Creating RDF resource for {}:{}",
-                     namespacedObject.getNamespaceURI(),
-                     namespacedObject.getLocalName());
-        return createProperty(
-                getRDFNamespaceForJcrNamespace(namespacedObject
-                        .getNamespaceURI()), namespacedObject.getLocalName())
-                .asResource();
+        try {
+            final String namespaceURI = namespacedObject.getNamespaceURI();
+            final String localName = namespacedObject.getLocalName();
+            LOGGER.trace("Creating RDF resource for {}:{}", namespaceURI, localName);
+            return createProperty(getRDFNamespaceForJcrNamespace(namespaceURI), localName).asResource();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -111,9 +112,8 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      *
      * @param nodeType the node type
      * @return a Resource for the given NodeType
-     * @throws javax.jcr.RepositoryException if repository exception occurred
      */
-    public static Resource getResource(final NodeType nodeType) throws RepositoryException {
+    public static Resource getResource(final NodeType nodeType) {
         return getResource((Namespaced) nodeType);
     }
 

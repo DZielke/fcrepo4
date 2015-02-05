@@ -25,8 +25,10 @@ import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
+import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -41,6 +43,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.utils.Streams;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import com.hp.hpl.jena.graph.Triple;
@@ -73,7 +76,7 @@ public class VersionsRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
         this.versionHistory = resource.getVersionHistory();
         final Iterator<Version> allVersions = versionHistory.getAllVersions();
-        final Stream<Version> versionsStream = stream(spliteratorUnknownSize(allVersions, 0), true);
+        final Stream<Version> versionsStream = fromIterator(allVersions);
         concat(versionsStream.flatMap(version2triples));
     }
 
@@ -98,7 +101,7 @@ public class VersionsRdfContext extends NodeRdfContext {
                                 new RdfStream(create(subject(), HAS_VERSION.asNode(), versionSubject),
                                         create(versionSubject, CREATED_DATE.asNode(),
                                                 createTypedLiteral(version.getCreated()).asNode()));
-                        results.concat(stream(versionHistory.getVersionLabels(version)).map(
+                        results.concat(Arrays.stream(versionHistory.getVersionLabels(version)).map(
                                 label -> create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(label))));
                         return results;
 

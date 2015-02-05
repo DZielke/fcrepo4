@@ -20,13 +20,15 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.Arrays.asList;
-import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
 import static org.fcrepo.kernel.RdfLexicon.VOAF_VOCABULARY;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.impl.utils.UncheckedFunction.uncheck;
+
+import java.util.Arrays;
+
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -54,7 +56,7 @@ public class NamespaceRdfContext extends RdfStream {
         super();
         final NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
 
-        namespaces(stream(namespaceRegistry.getPrefixes()).filter(p -> !p.isEmpty() && !p.equals("jcr")).collect(
+        namespaces(Arrays.stream(namespaceRegistry.getPrefixes()).filter(p -> !p.isEmpty() && !p.equals("jcr")).collect(
                         toMap(p -> p, uncheck(p -> getRDFNamespaceForJcrNamespace(namespaceRegistry.getURI(p))))));
 
         concat(namespaces().entrySet().stream().<Triple>flatMap(

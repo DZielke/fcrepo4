@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -34,6 +33,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDanyURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -49,13 +49,16 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.impl.mappings.ItemDefinitionToTriples.getResource;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cbeer
+ * @author ajs6f
  */
 public class NodeTypeRdfContextTest {
 
@@ -112,7 +115,7 @@ public class NodeTypeRdfContextTest {
     }
 
     @Test
-    public void testShouldMapASimpleNodeTypeToRdf() throws RepositoryException {
+    public void testShouldMapASimpleNodeTypeToRdf() {
         final Model actual = new NodeTypeRdfContext(mockNodeType).asModel();
         assertTrue(actual.contains(createResource(REPOSITORY_NAMESPACE
                 + mockNodeTypeName), type, Class));
@@ -133,24 +136,18 @@ public class NodeTypeRdfContextTest {
     public void testShouldMapNodeTypeManagerToRdf() throws RepositoryException {
         final NodeTypeManager mockNodeTypeManager = mock(NodeTypeManager.class);
         final NodeTypeIterator mockNodeTypeIterator = mock(NodeTypeIterator.class);
-        when(mockNodeTypeIterator.next()).thenReturn(mockNodeType);
-        when(mockNodeTypeIterator.hasNext()).thenReturn(true, false);
         when(mockNodeTypeManager.getPrimaryNodeTypes()).thenReturn(mockNodeTypeIterator);
 
         final NodeTypeIterator mockMixinTypeIterator = mock(NodeTypeIterator.class);
-
-        when(mockMixinTypeIterator.next()).thenReturn(mockNodeTypeB);
-        when(mockMixinTypeIterator.hasNext()).thenReturn(true, false);
         when(mockNodeTypeManager.getMixinNodeTypes()).thenReturn(mockMixinTypeIterator);
 
-        final Model actual = new NodeTypeRdfContext(mockNodeTypeManager).asModel();
-        assertTrue(actual.contains(
-                ResourceFactory.createResource(REPOSITORY_NAMESPACE + mockNodeTypeName), type, Class));
-        assertTrue(actual.contains(ResourceFactory.createResource("b#b"), type, Class));
+        new NodeTypeRdfContext(mockNodeTypeManager).asModel();
+        verify(mockNodeTypeIterator).forEachRemaining(any(Consumer.class));
+        verify(mockMixinTypeIterator).forEachRemaining(any(Consumer.class));
     }
 
     @Test
-    public void testShouldIncludeSupertypeInformation() throws RepositoryException {
+    public void testShouldIncludeSupertypeInformation() {
 
         when(mockNodeType.getDeclaredSupertypes()).thenReturn(new NodeType[] { mockNodeTypeA, mockNodeTypeB });
         final Model actual = new NodeTypeRdfContext(mockNodeType).asModel();
@@ -194,7 +191,7 @@ public class NodeTypeRdfContextTest {
     }
 
     @Test
-    public void testShouldSkipChildNodesAsResidualSet() throws RepositoryException, IOException {
+    public void testShouldSkipChildNodesAsResidualSet() throws IOException {
 
         when(mockNodeDefinitionA.getName()).thenReturn("*");
         when(mockNodeType.getDeclaredChildNodeDefinitions()).thenReturn(
@@ -234,7 +231,7 @@ public class NodeTypeRdfContextTest {
     }
 
     @Test
-    public void testShouldExcludePropertyDefinitionsForResidualSets() throws RepositoryException {
+    public void testShouldExcludePropertyDefinitionsForResidualSets() {
         when(mockProperty.getName()).thenReturn("*");
         when(mockNodeType.getDeclaredPropertyDefinitions()).thenReturn(new PropertyDefinition[] { mockProperty });
 
