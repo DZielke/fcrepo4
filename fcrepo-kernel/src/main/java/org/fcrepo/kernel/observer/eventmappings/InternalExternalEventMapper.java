@@ -15,20 +15,19 @@
  */
 package org.fcrepo.kernel.observer.eventmappings;
 
-import java.util.Iterator;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.observer.FedoraEvent;
 
-import com.google.common.base.Function;
-
 /**
- * Maps {@link Iterator}-packages of {@link Event}s to
- * {@link Iterator}s of {@link FedoraEvent}s according to some algorithm
+ * Maps {@link Stream}-packages of {@link Event}s to
+ * {@link Stream}s of {@link FedoraEvent}s according to some algorithm
  *
  * @author ajs6f
  * @since Feb 27, 2014
  */
-public interface InternalExternalEventMapper extends Function<Iterator<Event>, Iterator<FedoraEvent>> {
+public interface InternalExternalEventMapper extends Function<Stream<Event>, Stream<FedoraEvent>> {
 }

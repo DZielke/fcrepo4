@@ -32,6 +32,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.EventType;
 
 import com.google.common.base.Function;
@@ -47,10 +48,10 @@ import com.google.common.collect.Iterables;
  */
 public class FedoraEvent {
 
-    private Event e;
+    private final Event e;
 
-    private Set<Integer> eventTypes = new HashSet<>();
-    private Set<String> eventProperties = new HashSet<>();
+    private final Set<Integer> eventTypes = new HashSet<>();
+    private final Set<String> eventProperties = new HashSet<>();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
@@ -58,7 +59,6 @@ public class FedoraEvent {
      * @param e the JCR event
      */
     public FedoraEvent(final Event e) {
-        checkArgument(e != null, "null cannot support a FedoraEvent!");
         this.e = e;
     }
 
@@ -130,8 +130,12 @@ public class FedoraEvent {
      * @return the node identifer of the underlying JCR {@link Event}s
      * @throws RepositoryException if repository exception occurred
      */
-    public String getIdentifier() throws RepositoryException {
-        return e.getIdentifier();
+    public String getIdentifier() {
+        try {
+            return e.getIdentifier();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**

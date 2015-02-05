@@ -15,15 +15,17 @@
  */
 package org.fcrepo.kernel.impl.services.functions;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
+
 import org.infinispan.distexec.DefaultExecutorService;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
 /**
  * A factory function to insulate services from the details of
  * building a DistributedExecutorService
- * 
+ *
  * @author barmintor
+ * @author ajs6f
  * @since 28 October, 2014
 **/
 public class GetClusterExecutor implements

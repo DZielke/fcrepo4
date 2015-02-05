@@ -21,10 +21,14 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.Mockito.withSettings;
 import static org.mockito.Mockito.mock;
 
+import java.util.Iterator;
+import java.util.function.Predicate;
+
 import javax.jcr.NamespaceRegistry;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.observation.Event;
@@ -34,20 +38,24 @@ import javax.jcr.observation.ObservationManager;
 import org.fcrepo.kernel.impl.observer.eventmappings.OneToOne;
 import org.fcrepo.kernel.observer.EventFilter;
 import org.fcrepo.kernel.observer.FedoraEvent;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.Repository;
 
-import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 import com.google.common.eventbus.EventBus;
 
 /**
  * <p>SimpleObserverTest class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class SimpleObserverTest {
 
     private SimpleObserver testObserver;
@@ -73,16 +81,43 @@ public class SimpleObserverTest {
     @Mock
     private Event mockEvent;
 
-    @Mock
     private EventIterator mockEvents;
 
     @Before
-    public void setUp() throws Exception {
-        initMocks(this);
-        mockSession = mock(Session.class, Mockito.withSettings().extraInterfaces(org.modeshape.jcr.api.Session.class));
+    public void setUp() throws RepositoryException {
+        mockSession = mock(Session.class, withSettings().extraInterfaces(org.modeshape.jcr.api.Session.class));
         when(mockRepository.login()).thenReturn((org.modeshape.jcr.api.Session) mockSession);
-        when(mockEvents.hasNext()).thenReturn(true, false);
-        when(mockEvents.next()).thenReturn(mockEvent);
+        mockEvents = new EventIterator(){
+            Iterator<Event> iterator = Iterators.forArray(mockEvent);
+            @Override
+            public void skip(final long skipNum) {
+                //NO OP
+            }
+
+            @Override
+            public long getSize() {
+                return 0;
+            }
+
+            @Override
+            public long getPosition() {
+                return 0;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public Event next() {
+                return iterator.next();
+            }
+
+            @Override
+            public Event nextEvent() {
+                return null;
+            }};
         testObserver = new SimpleObserver();
         setField(testObserver, "repository", mockRepository);
         setField(testObserver, "eventMapper", new OneToOne());
@@ -92,7 +127,7 @@ public class SimpleObserverTest {
     }
 
     @Test
-    public void testBuildListener() throws Exception {
+    public void testBuildListener() throws RepositoryException {
         when(mockWS.getObservationManager()).thenReturn(mockOM);
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         testObserver.buildListener();
@@ -100,7 +135,7 @@ public class SimpleObserverTest {
     }
 
     @Test
-    public void testOnEvent() throws Exception {
+    public void testOnEvent() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         when(mockWS.getNamespaceRegistry()).thenReturn(mockNS);
         testObserver.onEvent(mockEvents);
@@ -109,21 +144,20 @@ public class SimpleObserverTest {
 
     @Test
     public void testOnEventAllFiltered() {
-        setField(testObserver, "eventFilter", new NoPassFilter());
+        setField(testObserver, "eventFilter", new EventFilter() {
+
+            @Override
+            public boolean test(final Event t) {
+                return false;
+            }
+
+            @Override
+            public Predicate<Event> getFilter(final Session session) {
+                return this;
+            }
+        });
         testObserver.onEvent(mockEvents);
         verify(mockBus, never()).post(any(FedoraEvent.class));
     }
-
-    private class NoPassFilter implements EventFilter {
-
-        @Override
-        public boolean apply(final Event input) {
-            return false;
-        }
-
-        @Override
-        public Predicate<Event> getFilter(final Session session) {
-            return this;
-        }}
 
 }

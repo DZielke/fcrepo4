@@ -15,8 +15,8 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.transform;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toCollection;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
@@ -29,16 +29,15 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.observer.EventFilter;
+
 import org.slf4j.Logger;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -77,12 +76,11 @@ public class DefaultFilter implements EventFilter {
     }
 
     @Override
-    public boolean apply(final Event event) {
+    public boolean test(final Event event) {
         try {
             final org.modeshape.jcr.api.observation.Event modeEvent = getJcr21Event(event);
-
-            final List<NodeType> nodeTypes = ImmutableList.copyOf(modeEvent.getMixinNodeTypes());
-            final Collection<String> mixinTypes = ImmutableSet.copyOf(transform(nodeTypes, nodetype2string));
+            final Collection<String> mixinTypes =
+                    stream(modeEvent.getMixinNodeTypes()).map(nodetype2string).collect(toCollection(HashSet::new));
             return mixinTypes.contains(FEDORA_RESOURCE)
                     || mixinTypes.contains(FEDORA_BINARY)
                     || mixinTypes.contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION)
@@ -91,7 +89,7 @@ public class DefaultFilter implements EventFilter {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
             return false;
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 

@@ -15,8 +15,10 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
+
 import org.fcrepo.kernel.observer.FedoraEvent;
+
 import org.slf4j.Logger;
 
 import javax.jcr.NamespaceRegistry;
@@ -28,13 +30,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author Andrew Woods
+ * @author ajs6f
  * @since 11/22/14
  */
 public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEvent> {
 
     private static final Logger LOGGER = getLogger(SimpleObserver.class);
 
-    private Session session;
+    private final Session session;
 
     /**
      * Constructor
@@ -50,24 +53,23 @@ public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEven
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
 
         final FedoraEvent event = new FedoraEvent(evt);
-        for (String property : evt.getProperties()) {
-            final String[] parts = property.split(":", 2);
-            if (parts.length == 2) {
-                final String prefix = parts[0];
-                try {
-                    event.addProperty(namespaceRegistry.getURI(prefix) + parts[1]);
-                } catch (RepositoryException ex) {
-                    LOGGER.trace("Prefix could not be dereferenced using the namespace registry: {}", property);
-                    event.addProperty(property);
-                }
-            } else {
-                event.addProperty(property);
-            }
-        }
-
-        for (Integer type : evt.getTypes()) {
-            event.addType(type);
-        }
+        evt.getProperties().stream().forEach(
+                property -> {
+                    final String[] parts = property.split(":", 2);
+                    if (parts.length == 2) {
+                        final String prefix = parts[0];
+                        try {
+                            event.addProperty(namespaceRegistry.getURI(prefix) + parts[1]);
+                        } catch (final RepositoryException ex) {
+                            LOGGER.trace("Prefix could not be dereferenced using the namespace registry: {}",
+                                    property);
+                            event.addProperty(property);
+                        }
+                    } else {
+                        event.addProperty(property);
+                    }
+                });
+        evt.getTypes().stream().forEach(t -> event.addType(t));
         return event;
     }
 

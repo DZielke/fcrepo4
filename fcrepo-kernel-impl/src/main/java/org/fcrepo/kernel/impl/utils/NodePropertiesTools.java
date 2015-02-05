@@ -141,7 +141,7 @@ public class NodePropertiesTools {
         try {
             final Node refNode = idTranslator.convert(resource).getNode();
 
-            if (isExternal.apply(refNode)) {
+            if (isExternal.test(refNode)) {
                 // we can't apply REFERENCE properties to external resources
                 return;
             }

@@ -15,31 +15,33 @@
  */
 package org.fcrepo.kernel.impl.services.functions;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Throwables.propagate;
+import static java.util.Objects.requireNonNull;
+
+import java.util.function.Function;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
-
-import com.google.common.base.Function;
 
 /**
  * Get the internal Modeshape BinaryKey for a binary property
  *
  * @author awoods
+ * @author ajs6f
  */
 public class GetBinaryKey implements Function<Property, BinaryKey> {
 
     @Override
     public BinaryKey apply(final Property input) {
-        checkArgument(input != null, "null cannot have a Binarykey!");
+        requireNonNull(input, "null cannot have a Binarykey!");
         try {
             return ((BinaryValue) input.getBinary()).getKey();
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 

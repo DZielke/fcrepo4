@@ -35,18 +35,12 @@ import com.google.common.collect.ImmutableMap;
  * <p>FedoraEventTest class.</p>
  *
  * @author ksclarke
+ * @author ajs6f
  */
 public class FedoraEventTest {
 
     FedoraEvent e = new FedoraEvent(new TestEvent(1, "Path/Child", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
-
-
-    @SuppressWarnings("unused")
-    @Test(expected = java.lang.IllegalArgumentException.class)
-    public void testWrapNullEvent() {
-        new FedoraEvent((Event)null);
-    }
 
     @Test(expected = java.lang.IllegalArgumentException.class)
     @SuppressWarnings("unused")
@@ -85,7 +79,7 @@ public class FedoraEventTest {
     }
 
     @Test
-    public void testGetIdentifier() throws Exception {
+    public void testGetIdentifier() {
 
         assertEquals("Identifier", e.getIdentifier());
 

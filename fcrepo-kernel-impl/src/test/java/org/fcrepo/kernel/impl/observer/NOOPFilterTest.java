@@ -28,6 +28,7 @@ import org.mockito.Mock;
  * <p>NOOPFilterTest class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 public class NOOPFilterTest {
 
@@ -42,7 +43,7 @@ public class NOOPFilterTest {
     @Test
     public void testApply() {
         assertTrue("Failed to pass an event through a NO-OP filter!",
-                   new NOOPFilter().getFilter(null).apply(mockEvent));
+                   new NOOPFilter().getFilter(null).test(mockEvent));
     }
 
 }

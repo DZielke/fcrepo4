@@ -16,16 +16,15 @@
 package org.fcrepo.kernel.impl.observer;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.transform;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_MOVED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
+
 import  org.fcrepo.metrics.RegistryService;
 
 import java.util.Iterator;
@@ -38,9 +37,10 @@ import javax.jcr.Session;
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.observer.EventFilter;
-import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.observer.eventmappings.InternalExternalEventMapper;
+
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
@@ -112,7 +112,8 @@ public class SimpleObserver implements EventListener {
     }
 
     /**
-     * Filter JCR events and transform them into our own FedoraEvents.
+     * Filter JCR events, transform them into our own {@link FedoraEvent}s, and post them to the internal repository
+     * event bus.
      *
      * @param events the JCR events
      */
@@ -121,19 +122,16 @@ public class SimpleObserver implements EventListener {
         Session lookupSession = null;
         try {
             lookupSession = repository.login();
-
             @SuppressWarnings("unchecked")
-            final Iterator<Event> filteredEvents = filter(events, eventFilter.getFilter(lookupSession));
-            final Iterator<FedoraEvent> publishableEvents = eventMapper.apply(filteredEvents);
-            final Iterator<FedoraEvent> namespacedEvents =
-                    transform(publishableEvents, new GetNamespacedProperties(lookupSession));
-
-            while (namespacedEvents.hasNext()) {
-                eventBus.post(namespacedEvents.next());
+            final Iterator<Event> eventsIterator = events;
+            eventMapper.apply(fromIterator(eventsIterator).filter(eventFilter.getFilter(lookupSession))).map(
+                    new GetNamespacedProperties(lookupSession)).forEach(ne -> {
+                LOGGER.warn("Posting to repository bus event: {}", ne);
+                eventBus.post(ne);
                 EVENT_COUNTER.inc();
-            }
+            });
         } catch (final RepositoryException ex) {
-            throw propagate(ex);
+            throw new RepositoryRuntimeException(ex);
         } finally {
             if (lookupSession != null) {
                 lookupSession.logout();

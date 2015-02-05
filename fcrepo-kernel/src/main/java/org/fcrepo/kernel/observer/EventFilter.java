@@ -15,10 +15,10 @@
  */
 package org.fcrepo.kernel.observer;
 
+import java.util.function.Predicate;
+
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
-
-import com.google.common.base.Predicate;
 
 /**
  * Filter JCR events to remove extraneous events

@@ -15,17 +15,18 @@
  */
 package org.modeshape.jcr;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
+
+import java.util.function.Function;
 
 import javax.jcr.Repository;
 
 import org.modeshape.jcr.value.binary.BinaryStore;
 
-import com.google.common.base.Function;
-
 /**
  * Retrieve the BinaryStore from a running Modeshape Repository
  * @author cbeer
+ * @author ajs6f
  * @since Apr 30, 2013
  */
 public class GetBinaryStore implements Function<Repository, BinaryStore> {
@@ -37,7 +38,7 @@ public class GetBinaryStore implements Function<Repository, BinaryStore> {
      */
     @Override
     public BinaryStore apply(final Repository input) {
-        checkNotNull(input, "null cannot have a BinaryStore!");
+        requireNonNull(input, "null cannot have a BinaryStore!");
         final JcrRepository.RunningState runningState = ((JcrRepository)input).runningState();
 
         return runningState.binaryStore();

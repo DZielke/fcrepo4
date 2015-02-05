@@ -79,31 +79,31 @@ public class DefaultFilterTest {
     @Test
     public void shouldApplyToResource() throws Exception {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraResource });
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.getFilter(mockSession).test(mockEvent));
     }
 
     @Test
     public void shouldApplyToObject() throws Exception {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer});
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.getFilter(mockSession).test(mockEvent));
     }
 
     @Test
     public void shouldApplyToDatastream() throws Exception {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraDatastream });
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.getFilter(mockSession).test(mockEvent));
     }
 
     @Test
     public void shouldApplyToBinary() throws Exception {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraBinary });
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.getFilter(mockSession).test(mockEvent));
     }
 
 
     @Test
     public void shouldNotApplyToNonFedoraNodes() throws Exception {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {  });
-        assertFalse(testObj.getFilter(mockSession).apply(mockEvent));
+        assertFalse(testObj.getFilter(mockSession).test(mockEvent));
     }
 }

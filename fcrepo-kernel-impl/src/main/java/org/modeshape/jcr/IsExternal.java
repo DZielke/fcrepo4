@@ -15,7 +15,7 @@
  */
 package org.modeshape.jcr;
 
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
 
 import javax.jcr.Node;
 
@@ -23,11 +23,12 @@ import javax.jcr.Node;
  * Break through Modeshape to find out if a node is external
  *
  * @author cabeer
+ * @author ajs6f
  * @since 10/8/14
  */
 public class IsExternal implements Predicate<Node> {
     @Override
-    public boolean apply(final Node input) {
+    public boolean test(final Node input) {
         return (input instanceof JcrNode) && ((JcrNode)input).isExternal();
     }
 
