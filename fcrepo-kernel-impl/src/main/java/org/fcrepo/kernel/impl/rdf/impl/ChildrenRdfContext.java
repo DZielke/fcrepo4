@@ -35,6 +35,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 9/16/14
  */
 public class ChildrenRdfContext extends NodeRdfContext {
@@ -61,13 +62,9 @@ public class ChildrenRdfContext extends NodeRdfContext {
     }
 
     private final Function<FedoraResource, Triple> child2triples = child -> {
-        final FedoraResource describedThing;
-        if (child instanceof NonRdfSourceDescription) {
-            final NonRdfSourceDescription description = (NonRdfSourceDescription) child;
-            describedThing = description.getDescribedResource();
-        } else {
-            describedThing = child;
-        }
+        final FedoraResource describedThing =
+                child instanceof NonRdfSourceDescription ? ((NonRdfSourceDescription) child).getDescribedResource()
+                        : child;
         final com.hp.hpl.jena.graph.Node childSubject = translator().reverse().convert(describedThing).asNode();
         LOGGER.trace("Creating triples for child node: {}", child);
         return create(subject(), CONTAINS.asNode(), childSubject);

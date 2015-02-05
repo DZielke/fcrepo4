@@ -21,8 +21,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
-import org.fcrepo.kernel.impl.utils.UncheckedFunction;
 import org.fcrepo.kernel.impl.utils.UncheckedPredicate;
+
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
 import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.PATH;
@@ -41,6 +42,7 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
 import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.impl.utils.UncheckedFunction.uncheck;
 
 /**
  * Embed all blank nodes in the RDF stream
@@ -84,14 +86,6 @@ public class BlankNodeRdfContext extends NodeRdfContext {
     private static final Predicate<Property> filterReferenceProperties = UncheckedPredicate
             .uncheck(p -> referencePropertyTypes.contains(p.getType()));
 
-    private final Function<Value, Node> getNodesForValue = UncheckedFunction.uncheck(v -> {
-        final Node refNode;
-        if (v.getType() == PATH) {
-            refNode = resource().getNode().getSession().getNode(v.getString());
-        } else {
-            refNode = resource().getNode().getSession().getNodeByIdentifier(v.getString());
-        }
-        return refNode;
-    });
-
+    private final Function<Value, Node> getNodesForValue = uncheck(v ->
+            v.getType() == PATH ? session().getNode(v.getString()) : session().getNodeByIdentifier(v.getString()));
 }
