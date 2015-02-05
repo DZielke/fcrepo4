@@ -158,7 +158,7 @@ public class NodeTypeRdfContextTest {
     }
 
     @Test
-    public void testShouldIncludeChildNodeDefinitions() throws RepositoryException {
+    public void testShouldIncludeChildNodeDefinitions() {
 
         when(mockNodeType.getDeclaredChildNodeDefinitions()).thenReturn(
                 new NodeDefinition[] {mockNodeDefinitionA, mockNodeDefinitionB});
@@ -174,7 +174,7 @@ public class NodeTypeRdfContextTest {
     }
 
     @Test
-    public void testShouldIncludeChildNodeRangeWhenTheChildNodeDeclaresRequiredType() throws RepositoryException {
+    public void testShouldIncludeChildNodeRangeWhenTheChildNodeDeclaresRequiredType() {
 
         when(mockNodeDefinitionA.getRequiredPrimaryTypes()).thenReturn(new NodeType[] { mockNodeTypeB });
         when(mockNodeType.getDeclaredChildNodeDefinitions()).thenReturn(new NodeDefinition[] { mockNodeDefinitionA });
@@ -205,7 +205,7 @@ public class NodeTypeRdfContextTest {
     }
 
     @Test
-    public void testShouldIncludePropertyDefinitions() throws RepositoryException {
+    public void testShouldIncludePropertyDefinitions() {
         when(mockNodeType.getDeclaredPropertyDefinitions()).thenReturn(new PropertyDefinition[] { mockProperty });
 
         final Model actual = new NodeTypeRdfContext(mockNodeType).asModel();
@@ -217,7 +217,7 @@ public class NodeTypeRdfContextTest {
 
 
     @Test
-    public void testShouldIncludePropertyDefinitionsRequiredTypeAsRange() throws RepositoryException {
+    public void testShouldIncludePropertyDefinitionsRequiredTypeAsRange() {
         when(mockProperty.getRequiredType()).thenReturn(REFERENCE);
         when(mockNodeType.getDeclaredPropertyDefinitions()).thenReturn(
                 new PropertyDefinition[] {mockProperty});

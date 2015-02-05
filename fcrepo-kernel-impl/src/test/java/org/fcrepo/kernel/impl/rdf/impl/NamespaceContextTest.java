@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.google.common.collect.Iterators.any;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;

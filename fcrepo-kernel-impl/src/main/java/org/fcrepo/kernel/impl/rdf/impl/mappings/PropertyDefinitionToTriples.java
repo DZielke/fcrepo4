@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDanyURI;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdate;
@@ -42,7 +41,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -106,27 +104,23 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
             return new RdfStream();
         }
 
-        try {
-            // skip range declaration for unknown types
-            final int requiredType = input.getRequiredType();
+        // skip range declaration for unknown types
+        final int requiredType = input.getRequiredType();
 
-            final Node rangeForJcrType = getRangeForJcrType(requiredType);
+        final Node rangeForJcrType = getRangeForJcrType(requiredType);
 
-            if (!rangeForJcrType.equals(UNMAPPED_TYPE)) {
-                LOGGER.trace("Adding RDFS:range for property: {} with required type: {} as: {}",
-                    input.getName(), nameFromValue(requiredType), rangeForJcrType.getURI());
-                final Triple propertyTriple =
-                    create(getResource(input).asNode(), range.asNode(),
-                            rangeForJcrType);
-                return new RdfStream(propertyTriple).concat(super.apply(input));
-            }
-            LOGGER.trace(
-                    "Skipping RDFS:range for property: {} with unmappable type: {}",
-                    input.getName(), nameFromValue(requiredType));
-            return super.apply(input);
-        } catch (final RepositoryException e) {
-            throw propagate(e);
+        if (rangeForJcrType != UNMAPPED_TYPE) {
+            LOGGER.trace("Adding RDFS:range for property: {} with required type: {} as: {}",
+                input.getName(), nameFromValue(requiredType), rangeForJcrType.getURI());
+            final Triple propertyTriple =
+                create(getResource(input).asNode(), range.asNode(),
+                        rangeForJcrType);
+            return new RdfStream(propertyTriple).concat(super.apply(input));
         }
+        LOGGER.trace(
+                "Skipping RDFS:range for property: {} with unmappable type: {}",
+                input.getName(), nameFromValue(requiredType));
+        return super.apply(input);
     }
 
     /**

@@ -67,20 +67,13 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
 
     @Override
     public RdfStream apply(final T input) {
-
-        try {
             final Node propertyDefinitionNode = getResource(input).asNode();
-
             LOGGER.trace("Adding triples for nodeType: {} with child nodes: {}", context.getURI(),
                     propertyDefinitionNode.getURI());
-
             return new RdfStream(
                     create(propertyDefinitionNode, type.asNode(), Property.asNode()),
                     create(propertyDefinitionNode, domain.asNode(), context),
                     create(propertyDefinitionNode, label.asNode(), createLiteral(input.getName())));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
     /**
@@ -124,9 +117,8 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      *
      * @param itemDefinition the given item definition
      * @return a resource for the given ItemDefinition
-     * @throws javax.jcr.RepositoryException if repository exception occurred
      */
-    public static Resource getResource(final ItemDefinition itemDefinition) throws RepositoryException {
+    public static Resource getResource(final ItemDefinition itemDefinition) {
         return getResource((Namespaced) itemDefinition);
     }
 }

@@ -94,6 +94,8 @@ public class HashRdfContextTest {
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getNode("#")).thenReturn(mockContainer);
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {});
         when(mockChildNode.getSession()).thenReturn(mockSession);
         when(mockNodeType.getName()).thenReturn("some:type");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -115,6 +117,8 @@ public class HashRdfContextTest {
     public void testHashContextWithHashChildren() throws RepositoryException {
 
         when(mockNode.hasNode("#")).thenReturn(true);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
+
         when(mockContainer.getNodes()).thenReturn(nodeIterator(mockChildNode));
 
         when(mockChildNode.getPath()).thenReturn("/a/#/123");
@@ -126,6 +130,7 @@ public class HashRdfContextTest {
             }
         });
         when(mockChildNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockChildNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
 
         when(mockProperty.getParent()).thenReturn(mockChildNode);
         when(mockProperty.getType()).thenReturn(STRING);

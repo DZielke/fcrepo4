@@ -19,10 +19,8 @@ import com.hp.hpl.jena.graph.Node;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
-import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDFS.range;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -47,32 +45,26 @@ public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinit
     @Override
     public RdfStream apply(final NodeDefinition input) {
 
-        try {
+        final Node propertyDefinitionNode = getResource(input).asNode();
 
-            final Node propertyDefinitionNode = getResource(input).asNode();
+        final NodeType[] requiredPrimaryTypes = input.getRequiredPrimaryTypes();
 
-            final NodeType[] requiredPrimaryTypes = input.getRequiredPrimaryTypes();
-
-            if (requiredPrimaryTypes.length > 1) {
-                // TODO we can express this as an OWL unionOf. But should we?
-                LOGGER.trace(
-                        "Skipping RDFS:range for {} with multiple primary types",
-                        propertyDefinitionNode.getName());
-            } else if (requiredPrimaryTypes.length == 1) {
-                LOGGER.trace("Adding RDFS:range for {} with primary types {}",
-                             input.getName(),
-                             requiredPrimaryTypes[0].getName());
-                return new RdfStream(create(propertyDefinitionNode, range
-                        .asNode(), getResource(requiredPrimaryTypes[0])
-                        .asNode())).concat(super.apply(input));
-            } else {
-                LOGGER.trace("Skipping RDFS:range for {} with no required primary types");
-            }
-            return super.apply(input);
-
-        } catch (final RepositoryException e) {
-            throw propagate(e);
+        if (requiredPrimaryTypes.length > 1) {
+            // TODO we can express this as an OWL unionOf. But should we?
+            LOGGER.trace(
+                    "Skipping RDFS:range for {} with multiple primary types",
+                    propertyDefinitionNode.getName());
+        } else if (requiredPrimaryTypes.length == 1) {
+            LOGGER.trace("Adding RDFS:range for {} with primary types {}",
+                         input.getName(),
+                         requiredPrimaryTypes[0].getName());
+            return new RdfStream(create(propertyDefinitionNode, range
+                    .asNode(), getResource(requiredPrimaryTypes[0])
+                    .asNode())).concat(super.apply(input));
+        } else {
+            LOGGER.trace("Skipping RDFS:range for {} with no required primary types");
         }
+        return super.apply(input);
 
     }
 }

@@ -129,6 +129,8 @@ public class BlankNodeRdfContextTest {
         when(mockBlankNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(true);
         when(mockBlankNode.getPath()).thenReturn("/.well-known/gen/xxxx");
         when(mockBlankNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+        when(mockNodeType.getSupertypes()).thenReturn(new NodeType[]{});
 
         when(mockOtherBnodeReferenceProperty.getType()).thenReturn(REFERENCE);
         when(mockOtherBnodeReferenceProperty.getName()).thenReturn("some:property");
@@ -140,6 +142,7 @@ public class BlankNodeRdfContextTest {
         when(mockNestedBlankNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(true);
         when(mockNestedBlankNode.getPath()).thenReturn("/.well-known/gen/yyyy");
         when(mockNestedBlankNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNestedBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
 
         when(mockNodeType.getName()).thenReturn("some:type");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -197,9 +200,6 @@ public class BlankNodeRdfContextTest {
 
     @Test
     public void testWithNestedBlanknodes() throws RepositoryException {
-
-
-
         when(mockNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
             public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
