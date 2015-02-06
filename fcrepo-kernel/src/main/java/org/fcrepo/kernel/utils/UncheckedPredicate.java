@@ -13,46 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.utils;
 
-import java.util.function.Function;
+package org.fcrepo.kernel.utils;
+
+import java.util.function.Predicate;
+
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 
-/**
- * We often need to use {@link Function}s that wrap methods that throw {@link RepositoryException}. This does that.
- *
- * @author ajs6f
- */
-@FunctionalInterface
-public interface UncheckedFunction<T, R> extends Function<T, R> {
+public interface UncheckedPredicate<T> extends Predicate<T> {
 
     @Override
-    default R apply(final T elem) {
+    default boolean test(final T elem) {
         try {
-            return applyThrows(elem);
+            return testThrows(elem);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
-    R applyThrows(T elem) throws RepositoryException;
+    boolean testThrows(T elem) throws RepositoryException;
 
-    static <T, R> UncheckedFunction<T, R> uncheck(final ThrowingLambda<T, R> f) {
-        return new UncheckedFunction<T, R>() {
+    static <T> UncheckedPredicate<T> uncheck(final ThrowingPredicate<T> p) {
+        return new UncheckedPredicate<T>() {
 
             @Override
-            public R applyThrows(final T elem) throws RepositoryException {
-                return f.apply(elem);
+            public boolean testThrows(final T elem) throws RepositoryException {
+                return p.test(elem);
             }
         };
 
     }
 
     @FunctionalInterface
-    public static interface ThrowingLambda<T, R> {
+    public static interface ThrowingPredicate<T> {
 
-        R apply(T element) throws RepositoryException;
+        boolean test(T element) throws RepositoryException;
     }
 }

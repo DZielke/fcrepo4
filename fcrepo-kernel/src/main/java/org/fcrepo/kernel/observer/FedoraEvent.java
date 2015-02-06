@@ -16,28 +16,23 @@
 package org.fcrepo.kernel.observer;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Sets.union;
-import static java.util.Collections.singleton;
+import static com.google.common.collect.ImmutableList.of;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.EventType;
-
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 
 /**
  * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
@@ -47,6 +42,8 @@ import com.google.common.collect.Iterables;
  * @since Feb 19, 2013
  */
 public class FedoraEvent {
+
+    public static final List<Integer> PROPERTY_EVENT_TYPES = of(PROPERTY_ADDED, PROPERTY_CHANGED, PROPERTY_REMOVED);
 
     private final Event e;
 
@@ -59,7 +56,8 @@ public class FedoraEvent {
      * @param e the JCR event
      */
     public FedoraEvent(final Event e) {
-        this.e = e;
+        this.e = requireNonNull(e, "null cannot support a FedoraEvent!");
+        addType(e.getType());
     }
 
     /**
@@ -69,15 +67,15 @@ public class FedoraEvent {
      * @param e the given fedora event
      */
     public FedoraEvent(final FedoraEvent e) {
-        checkArgument(e != null, "null cannot support a FedoraEvent!");
-        this.e = e.e;
+        this(requireNonNull(e, "null cannot support a FedoraEvent!").e);
+        e.getTypes().forEach(this::addType);
     }
 
     /**
      * @return the event types of the underlying JCR {@link Event}s
      */
     public Set<Integer> getTypes() {
-        return eventTypes != null ? union(singleton(e.getType()), eventTypes) : singleton(e.getType());
+        return eventTypes;
     }
 
     /**
@@ -110,13 +108,15 @@ public class FedoraEvent {
      * @return the path of the underlying JCR {@link Event}s
      * @throws RepositoryException if the repository exception occurred
      */
-    public String getPath() throws RepositoryException {
-        if (e.getType() == PROPERTY_ADDED   ||
-            e.getType() == PROPERTY_CHANGED ||
-            e.getType() == PROPERTY_REMOVED) {
-            return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
+    public String getPath() {
+        try {
+            if (PROPERTY_EVENT_TYPES.contains(e.getType())) {
+                return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
+            }
+            return e.getPath();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return e.getPath();
     }
 
     /**
@@ -165,18 +165,15 @@ public class FedoraEvent {
     @Override
     public String toString() {
         try {
-            return toStringHelper(this).add("Event types:",
-                    Joiner.on(',').join(Iterables.transform(getTypes(), new Function<Integer, String>() {
-
-                        @Override
-                        public String apply(final Integer type) {
-                            return EventType.valueOf(type).getName();
-                        }
-                    }))).add("Event properties:",
-                    Joiner.on(',').join(eventProperties)).add("Path:", getPath()).add("Date: ",
-                    getDate()).add("Info:", getInfo()).toString();
+            return toStringHelper(this)
+                    .add("Event types:",
+                            getTypes().stream().map(EventType::valueOf).map(EventType::getName).collect(joining(",")))
+                    .add("Event properties:", eventProperties.stream().collect(joining(",")))
+                    .add("Path:", getPath())
+                    .add("Date: ", getDate())
+                    .add("Info:", getInfo()).toString();
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 }

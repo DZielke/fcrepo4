@@ -28,7 +28,6 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isContainer;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isMultipleValuedProperty;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -40,7 +39,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.InputStream;
 import java.util.Iterator;
-
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
@@ -64,13 +62,12 @@ import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.JcrConstants;
-
-import com.google.common.base.Predicate;
 
 /**
  * <p>FedoraTypesUtilsTest class.</p>
@@ -159,20 +156,19 @@ public class FedoraTypesUtilsTest {
         final Property mockYes = mock(Property.class);
         when(mockYes.isMultiple()).thenReturn(true);
         final Property mockNo = mock(Property.class);
-        final Predicate<Property> test = isMultipleValuedProperty;
         try {
-            test.apply(null);
+            isMultipleValuedProperty.test(null);
             fail("Null values should throw a NullPointerException");
         } catch (final NullPointerException e) {
             // expected
         }
-        boolean actual = test.apply(mockYes);
+        boolean actual = isMultipleValuedProperty.test(mockYes);
         assertEquals(true, actual);
-        actual = test.apply(mockNo);
+        actual = isMultipleValuedProperty.test(mockNo);
         assertEquals(false, actual);
         when(mockYes.isMultiple()).thenThrow(new RepositoryException());
         try {
-            test.apply(mockYes);
+            isMultipleValuedProperty.test(mockYes);
             fail("Unexpected completion after RepositoryException!");
         } catch (final RuntimeException e) {
             // expected
@@ -183,7 +179,7 @@ public class FedoraTypesUtilsTest {
     public void testIsBinaryContentProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
-        assertTrue(isBinaryContentProperty.apply(mockProperty));
+        assertTrue(isBinaryContentProperty.test(mockProperty));
     }
 
     @Test
@@ -242,14 +238,14 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsNotBinaryContentProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.STRING);
-        assertFalse(isBinaryContentProperty.apply(mockProperty));
+        assertFalse(isBinaryContentProperty.test(mockProperty));
     }
 
     @Test
     public void testContentButNotBinaryContentProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.STRING);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
-        assertFalse(isBinaryContentProperty.apply(mockProperty));
+        assertFalse(isBinaryContentProperty.test(mockProperty));
     }
 
     @Test

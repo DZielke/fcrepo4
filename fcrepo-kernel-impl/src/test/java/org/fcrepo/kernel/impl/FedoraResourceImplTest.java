@@ -61,9 +61,11 @@ import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.impl.testutilities.TestTriplesContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
@@ -82,25 +84,13 @@ public class FedoraResourceImplTest {
     private FedoraResource testObj;
 
     @Mock
-    private Node mockNode;
-
-    @Mock
-    private Node mockRoot;
-
-    @Mock
-    private Node mockChild;
-
-    @Mock
-    private Node mockContainer;
+    private Node mockNode, mockRoot, mockChild, mockContainer;
 
     @Mock
     private Session mockSession;
 
     @Mock
-    private Property mockProp;
-
-    @Mock
-    private Property mockContainerProperty;
+    private Property mockProp, mockContainerProperty;
 
     @Mock
     private JcrRdfTools mockJcrRdfTools;
@@ -354,8 +344,13 @@ public class FedoraResourceImplTest {
 
     @Test
     public void testGetChildrenWithChildren() throws RepositoryException {
+        when(mockNode.hasNodes()).thenReturn(true);
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.getName()).thenReturn("x");
+        when(mockChild.hasNodes()).thenReturn(false);
+        when(mockChild.getNodes()).thenReturn(nodeIterator());
+        when(mockChild.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+        when(mockChild.isNodeType(Mockito.any(String.class))).thenReturn(false);
         final Iterator<FedoraResource> children = testObj.getChildren();
 
         assertTrue("Expected an iterator with values", children.hasNext());

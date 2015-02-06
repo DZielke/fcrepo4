@@ -116,7 +116,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
             @Override
             public boolean test(final Property p) {
-                return JcrPropertyFunctions.isBinaryContentProperty.apply(p)
+                return JcrPropertyFunctions.isBinaryContentProperty.test(p)
                         || isProtectedAndShouldBeHidden.test(p);
             }
         };

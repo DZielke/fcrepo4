@@ -19,7 +19,7 @@ import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.function.Function;
@@ -39,6 +39,7 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
+
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Triple;

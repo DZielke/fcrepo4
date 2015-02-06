@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -22,6 +23,7 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
+
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
@@ -42,7 +44,7 @@ import static org.fcrepo.kernel.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 
 /**
  * @author cabeer
@@ -78,8 +80,8 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
     private void concatIsMemberOfRelation(final FedoraResource container) throws RepositoryException {
         final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
 
-        final Resource memberRelation = createResource(property.getString());
-        final Resource membershipResource = getMemberResource(container);
+        final Node memberRelation = createResource(property.getString()).asNode();
+        final Node membershipResource = getMemberResource(container).asNode();
 
         if (membershipResource == null) {
             return;
@@ -98,7 +100,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
         }
 
         if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
-            concat(create(subject(), memberRelation.asNode(), membershipResource.asNode()));
+            concat(create(subject(), memberRelation, membershipResource));
         } else if (container.hasType(LDP_INDIRECT_CONTAINER)) {
             final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(), createResource
                     (insertedContainerProperty), null);
@@ -114,8 +116,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
                     fromIterator(transform(values, valueConverter)).filter(
                             n -> n.isURIResource() && translator().inDomain(n.asResource()));
 
-            concat(insertedContentRelations.map(n -> create(n.asNode(), memberRelation.asNode(), membershipResource
-                    .asNode())));
+            concat(insertedContentRelations.map(n -> create(n.asNode(), memberRelation, membershipResource)));
 
         }
     }

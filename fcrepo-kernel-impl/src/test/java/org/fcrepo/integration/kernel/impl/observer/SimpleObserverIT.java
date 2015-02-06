@@ -15,11 +15,11 @@
  */
 package org.fcrepo.integration.kernel.impl.observer;
 
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
@@ -28,9 +28,12 @@ import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.impl.AbstractIT;
 import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.services.ContainerService;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.google.common.eventbus.EventBus;
@@ -42,9 +45,13 @@ import java.util.Set;
  * <p>SimpleObserverIT class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 @ContextConfiguration({"/spring-test/eventing.xml", "/spring-test/repo.xml"})
 public class SimpleObserverIT extends AbstractIT {
+
+    private static final Logger log = getLogger(SimpleObserverIT.class);
+
 
     private Integer eventBusMessageCount;
 
@@ -52,16 +59,22 @@ public class SimpleObserverIT extends AbstractIT {
     private Repository repository;
 
     @Inject
+    private ContainerService containerService;
+
+    @Inject
     private EventBus eventBus;
 
     @Test
     public void TestEventBusPublishing() throws RepositoryException {
-
         final Session se = repository.login();
-        se.getRootNode().addNode("/object1").addMixin(FEDORA_CONTAINER);
-        se.getRootNode().addNode("/object2").addMixin(FEDORA_CONTAINER);
-        se.save();
-        se.logout();
+        try {
+            containerService.findOrCreate(se, "/object1");
+            se.save();
+            containerService.findOrCreate(se, "/object2");
+            se.save();
+        } finally {
+            se.logout();
+        }
 
         try {
             Thread.sleep(500);
@@ -80,12 +93,13 @@ public class SimpleObserverIT extends AbstractIT {
     @Subscribe
     public void countMessages(final FedoraEvent e) {
         eventBusMessageCount++;
-
+        log.info("Received event from path: {}", e.getPath());
         final Set<String> properties = e.getProperties();
         assertNotNull(properties);
+        log.info("Discovered properties: {}", properties);
 
         final String expected = JCR_NAMESPACE + "mixinTypes";
-        assertTrue("Should contain: " + expected + properties, properties.contains(expected));
+        assertTrue("Should contain: " + expected + " in " + properties, properties.contains(expected));
     }
 
     @Before

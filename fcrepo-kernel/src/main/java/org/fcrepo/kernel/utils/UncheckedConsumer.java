@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.impl.utils;
+package org.fcrepo.kernel.utils;
 
 import java.util.function.Consumer;
 

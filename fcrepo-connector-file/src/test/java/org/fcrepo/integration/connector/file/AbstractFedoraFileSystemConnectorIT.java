@@ -20,12 +20,12 @@ import static java.lang.System.clearProperty;
 import static java.lang.System.getProperty;
 import static java.lang.System.setProperty;
 import static java.util.Arrays.asList;
-import static com.google.common.collect.Lists.transform;
 import static org.fcrepo.kernel.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.nodetype2name;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -55,9 +55,11 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.Container;
@@ -65,7 +67,6 @@ import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -184,7 +185,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
             final String path = f.getAbsolutePath();
             try {
                 Files.deleteIfExists(Paths.get(path));
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 logger.error("Error in clean up", e);
                 fail("Unable to delete work files from a previous test run. File=" + path);
             }
@@ -201,8 +202,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final Node node = object.getNode();
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
-
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_CONTAINER);
+        final boolean found = asList(mixins).stream().map(nodetype2name).anyMatch(FEDORA_CONTAINER::equals);
         assertTrue("Mixin not found: " + FEDORA_CONTAINER, found);
 
         session.save();
@@ -220,9 +220,8 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final Node node = nonRdfSourceDescription.getNode();
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
-
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name)
-                .contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+        final boolean found =
+                asList(mixins).stream().map(nodetype2name).anyMatch(FEDORA_NON_RDF_SOURCE_DESCRIPTION::equals);
         assertTrue("Mixin not found: " + FEDORA_NON_RDF_SOURCE_DESCRIPTION, found);
 
         session.save();
@@ -238,8 +237,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
-
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_BINARY);
+        final boolean found = asList(mixins).stream().map(nodetype2name).anyMatch(FEDORA_BINARY::equals);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
         final File file = fileForNode(node);
@@ -323,7 +321,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     protected File propertyFileForNode(final Node node) {
         try {
             System.out.println("NODE PATH: " + node.getPath());
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         return new File(getProperty(PROP_EXT_TEST_DIR),

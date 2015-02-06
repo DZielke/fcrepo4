@@ -19,7 +19,6 @@
 
 package org.fcrepo.kernel.impl.observer.eventmappings;
 
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.jcr.observation.Event;
@@ -36,10 +35,8 @@ import org.fcrepo.kernel.observer.eventmappings.InternalExternalEventMapper;
  */
 public class OneToOne implements InternalExternalEventMapper {
 
-    private static final Function<Event, FedoraEvent> TO_FEDORA_EVENT = e -> new FedoraEvent(e);
-
     @Override
     public Stream<FedoraEvent> apply(final Stream<Event> jcrEvents) {
-        return jcrEvents.map(TO_FEDORA_EVENT);
+        return jcrEvents.map(FedoraEvent::new);
     }
 }

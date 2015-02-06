@@ -36,10 +36,9 @@ import org.modeshape.jcr.value.BinaryValue;
 public class GetBinaryKey implements Function<Property, BinaryKey> {
 
     @Override
-    public BinaryKey apply(final Property input) {
-        requireNonNull(input, "null cannot have a Binarykey!");
+    public BinaryKey apply(final Property p) {
         try {
-            return ((BinaryValue) input.getBinary()).getKey();
+            return ((BinaryValue) requireNonNull(p, "null cannot have a Binarykey!").getBinary()).getKey();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

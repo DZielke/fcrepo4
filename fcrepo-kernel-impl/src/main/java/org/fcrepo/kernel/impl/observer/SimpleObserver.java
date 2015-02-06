@@ -22,12 +22,13 @@ import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import  org.fcrepo.metrics.RegistryService;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -39,6 +40,7 @@ import javax.jcr.observation.EventListener;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.observer.EventFilter;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.observer.eventmappings.InternalExternalEventMapper;
 
 import org.modeshape.jcr.api.Repository;
@@ -124,8 +126,9 @@ public class SimpleObserver implements EventListener {
             lookupSession = repository.login();
             @SuppressWarnings("unchecked")
             final Iterator<Event> eventsIterator = events;
-            eventMapper.apply(fromIterator(eventsIterator).filter(eventFilter.getFilter(lookupSession))).map(
-                    new GetNamespacedProperties(lookupSession)).forEach(ne -> {
+            final Stream<FedoraEvent> filteredMappedEvents =
+                    eventMapper.apply(fromIterator(eventsIterator).filter(eventFilter.getFilter(lookupSession)));
+            filteredMappedEvents.map(new GetNamespacedProperties(lookupSession)).forEach(ne -> {
                 LOGGER.warn("Posting to repository bus event: {}", ne);
                 eventBus.post(ne);
                 EVENT_COUNTER.inc();

@@ -42,7 +42,7 @@ public class FedoraEventTest {
     FedoraEvent e = new FedoraEvent(new TestEvent(1, "Path/Child", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
 
-    @Test(expected = java.lang.IllegalArgumentException.class)
+    @Test(expected = java.lang.NullPointerException.class)
     @SuppressWarnings("unused")
     public void testWrapNullFedoraEvent() {
         new FedoraEvent((FedoraEvent)null);
@@ -54,13 +54,13 @@ public class FedoraEventTest {
     }
 
     @Test
-    public void testGetPath() throws Exception {
+    public void testGetPath() {
         assertEquals("Path/Child", e.getPath());
 
     }
 
     @Test
-    public void testGetPathWithProperties() throws Exception {
+    public void testGetPathWithProperties() {
         final FedoraEvent e = new FedoraEvent(new TestEvent(PROPERTY_CHANGED,
                                                             "Path/Child",
                                                             "UserId",

@@ -22,7 +22,8 @@ import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.UncheckedFunction.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Arrays;
@@ -65,40 +66,36 @@ public class VersionsRdfContext extends NodeRdfContext {
      * @throws RepositoryException if repository exception occurred
      */
     public VersionsRdfContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> idTranslator)
-        throws RepositoryException {
+                              final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
-        final Iterator<Version> allVersions = resource().getVersionHistory().getAllVersions();
-        final Stream<Version> versionsStream = fromIterator(allVersions);
-        concat(versionsStream.flatMap(version2triples));
+        try {
+            final Iterator<Version> allVersions = resource().getVersionHistory().getAllVersions();
+            final Stream<Version> versionsStream = fromIterator(allVersions);
+            concat(versionsStream.flatMap(version2triples));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     private final Function<Version, Stream<Triple>> version2triples =
-            version -> {
-
-                try {
-                    final VersionHistory versionHistory = resource().getVersionHistory();
-                    /* Discard jcr:rootVersion */
-                    if (version.getName().equals(versionHistory.getRootVersion().getName())) {
-                        LOGGER.trace("Skipped root version from triples");
-                        return new RdfStream();
-                    }
-
-                    final Node frozenNode = version.getFrozenNode();
-                    final com.hp.hpl.jena.graph.Node versionSubject =
-                            nodeToResource(translator()).convert(frozenNode).asNode();
-
-                    final RdfStream results =
-                            new RdfStream(create(subject(), HAS_VERSION.asNode(), versionSubject),
-                                    create(versionSubject, CREATED_DATE.asNode(),
-                                            createTypedLiteral(version.getCreated()).asNode()));
-                    results.concat(Arrays.stream(versionHistory.getVersionLabels(version)).map(
-                            label -> create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(label))));
-                    return results;
-
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
+            uncheck(version -> {
+                final VersionHistory versionHistory = resource().getVersionHistory();
+                /* Discard jcr:rootVersion */
+                if (version.getName().equals(versionHistory.getRootVersion().getName())) {
+                    LOGGER.trace("Skipped root version from triples");
+                    return new RdfStream();
                 }
 
-            };
+                final Node frozenNode = version.getFrozenNode();
+                final com.hp.hpl.jena.graph.Node versionSubject =
+                        nodeToResource(translator()).convert(frozenNode).asNode();
+
+                final RdfStream results =
+                        new RdfStream(create(subject(), HAS_VERSION.asNode(), versionSubject),
+                                create(versionSubject, CREATED_DATE.asNode(),
+                                        createTypedLiteral(version.getCreated()).asNode()));
+                results.concat(Arrays.stream(versionHistory.getVersionLabels(version)).map(
+                        label -> create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(label))));
+                return results;
+            });
 }

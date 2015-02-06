@@ -15,21 +15,23 @@
  */
 package org.fcrepo.kernel.services.functions;
 
-import static com.google.common.base.Throwables.propagate;
 import static org.fcrepo.kernel.FedoraJcrTypes.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Value;
 
-import com.google.common.collect.Iterators;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.utils.UncheckedPredicate;
 
 /**
  * Base class for matching sets of node types
@@ -51,36 +53,15 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
 
     @Override
     public boolean test(final Node input) {
-        if (input == null) {
-            throw new IllegalArgumentException(
-                    "null node passed to" + getClass().getName()
-            );
-        }
-        int matched = 0;
         try {
-
-            if (isFrozen.apply(input) && input.hasProperty(FROZEN_MIXIN_TYPES)) {
-                final Iterator<String> transform = Iterators.transform(
-                        property2values.apply(input.getProperty(FROZEN_MIXIN_TYPES)),
-                        value2string
-                );
-
-                while (transform.hasNext()) {
-                    if (nodeTypes.contains(transform.next())) {
-                        matched++;
-                    }
-                }
-            } else {
-                for (final String nodeType : nodeTypes) {
-                    if (input.isNodeType(nodeType)) {
-                        matched++;
-                    }
-                }
+            if (isFrozen.test(input) && input.hasProperty(FROZEN_MIXIN_TYPES)) {
+                final Stream<Value> values = fromIterator(property2values.apply(input.getProperty(FROZEN_MIXIN_TYPES)));
+                return test((int) values.map(value2string).filter(nodeTypes::contains).count());
             }
+            return test((int) nodeTypes.stream().filter(UncheckedPredicate.uncheck(n->input.isNodeType(n))).count());
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
-        return test(matched);
     }
 
     protected abstract boolean test(final int matched);

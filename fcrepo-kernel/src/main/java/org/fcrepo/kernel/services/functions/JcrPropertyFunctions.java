@@ -15,32 +15,30 @@
  */
 package org.fcrepo.kernel.services.functions;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
-import org.fcrepo.kernel.FedoraJcrTypes;
-import org.slf4j.Logger;
+
+import org.fcrepo.kernel.utils.UncheckedFunction;
+import org.fcrepo.kernel.utils.UncheckedPredicate;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
-import java.util.Iterator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
+import java.util.Iterator;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import static javax.jcr.PropertyType.BINARY;
+import static org.fcrepo.kernel.FedoraJcrTypes.FROZEN_NODE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 9/25/14
  */
 public final class JcrPropertyFunctions {
-
-    private static final Logger LOGGER = getLogger(JcrPropertyFunctions.class);
 
     private JcrPropertyFunctions() {
     }
@@ -48,100 +46,35 @@ public final class JcrPropertyFunctions {
     /**
      * Translates a {@link javax.jcr.nodetype.NodeType} to its {@link String} name.
      */
-    public static Function<NodeType, String> nodetype2name =
-        new Function<NodeType, String>() {
+    public static Function<NodeType, String> nodetype2name = UncheckedFunction.uncheck(NodeType::getName);
 
-            @Override
-            public String apply(final NodeType t) {
-                checkNotNull(t, "null has no name!");
-                return t.getName();
-            }
-        };
     /**
      * Translates a JCR {@link javax.jcr.Value} to its {@link String} expression.
      */
-    public static Function<Value, String> value2string =
-        new Function<Value, String>() {
+    public static Function<Value, String> value2string = UncheckedFunction.uncheck(Value::getString);
 
-            @Override
-            public String apply(final Value v) {
-                try {
-                    checkNotNull(v, "null has no appropriate "
-                                        + "String representation!");
-                    return v.getString();
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
     /**
      * Constructs an {@link java.util.Iterator} of {@link javax.jcr.Value}s from any
      * {@link javax.jcr.Property}, multi-valued or not.
      */
-    public static Function<Property, Iterator<Value>> property2values =
-        new Function<Property, Iterator<Value>>() {
+    public static Function<Property, Iterator<Value>> property2values = UncheckedFunction.uncheck(p -> p.isMultiple()
+            ? Iterators.forArray(p.getValues()) : Iterators.forArray(p.getValue()));
 
-            @Override
-            public Iterator<Value> apply(final Property p) {
-                try {
-                    if (p.isMultiple()) {
-                        LOGGER.debug("Found multi-valued property: {}", p);
-                        return Iterators.forArray(p.getValues());
-                    }
-                    LOGGER.debug("Found single-valued property: {}", p);
-                    return Iterators.forArray(p.getValue());
-                } catch (final Exception e) {
-                    throw propagate(e);
-                }
-            }
-        };
     /**
      * Check if a JCR property is a multivalued property or not
      */
-    public static Predicate<Property> isMultipleValuedProperty =
-        new Predicate<Property>() {
+    public static Predicate<Property> isMultipleValuedProperty = UncheckedPredicate.uncheck(p -> p.isMultiple());
 
-            @Override
-            public boolean apply(final Property p) {
-                checkNotNull(p, "null is neither multiple nor not multiple!");
-                try {
-                    return p.isMultiple();
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
     /**
      * Check if a JCR property is a binary jcr:data property
      */
     public static Predicate<Property> isBinaryContentProperty =
-        new Predicate<Property>() {
+            UncheckedPredicate.uncheck(p -> p.getType() == BINARY && p.getName().equals(JCR_DATA));
 
-            @Override
-            public boolean apply(final Property p) {
-                checkNotNull(p, "null is neither binary nor not binary!");
-                try {
-                    return p.getType() == BINARY && p.getName().equals(JCR_DATA);
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
     /**
      * Predicate for determining whether this {@link javax.jcr.Node} is a frozen node
      * (a part of the system version history).
      */
-    public static Predicate<Node> isFrozen = new Predicate<Node>() {
-
-        @Override
-        public boolean apply(final Node node) {
-            checkNotNull(node, "null cannot be a Frozen node!");
-            try {
-                return node.isNodeType(FedoraJcrTypes.FROZEN_NODE);
-            } catch (final RepositoryException e) {
-                throw propagate(e);
-            }
-        }
-    };
+    public static Predicate<Node> isFrozen = UncheckedPredicate.uncheck(n -> n.isNodeType(FROZEN_NODE));
 
 }

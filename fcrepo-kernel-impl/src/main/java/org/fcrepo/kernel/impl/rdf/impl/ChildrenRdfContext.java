@@ -21,6 +21,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
@@ -30,7 +31,7 @@ import java.util.stream.Stream;
 
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

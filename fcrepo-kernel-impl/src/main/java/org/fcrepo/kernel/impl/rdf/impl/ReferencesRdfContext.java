@@ -15,13 +15,14 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
+
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 

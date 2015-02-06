@@ -206,7 +206,7 @@ public class NodePropertiesTools {
 
             property = node.getProperty(propertyName);
 
-            if (JcrPropertyFunctions.isMultipleValuedProperty.apply(property)) {
+            if (JcrPropertyFunctions.isMultipleValuedProperty.test(property)) {
 
                 final List<Value> newValues = new ArrayList<>();
 

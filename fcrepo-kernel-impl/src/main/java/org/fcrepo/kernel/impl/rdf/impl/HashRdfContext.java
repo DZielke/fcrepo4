@@ -19,6 +19,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -28,7 +29,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.collect.ImmutableList.of;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 
 /**
  * @author cabeer

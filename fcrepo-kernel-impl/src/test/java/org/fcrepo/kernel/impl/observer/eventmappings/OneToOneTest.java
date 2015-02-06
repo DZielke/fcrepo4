@@ -38,10 +38,9 @@ public class OneToOneTest {
     @Mock
     private Event mockEvent1, mockEvent2, mockEvent3;
 
-    private final Stream<Event> testStream = Stream.of(mockEvent1, mockEvent2, mockEvent3);
-
     @Test
     public void testCardinality() {
+        final Stream<Event> testStream = Stream.of(mockEvent1, mockEvent2, mockEvent3);
         assertEquals("Didn't get a FedoraEvent for every input JCR Event!", 3, testMapping
                 .apply(testStream).count());
     }

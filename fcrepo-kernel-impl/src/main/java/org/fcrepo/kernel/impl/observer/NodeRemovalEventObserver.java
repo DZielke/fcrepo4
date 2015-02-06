@@ -16,9 +16,10 @@
 package org.fcrepo.kernel.impl.observer;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.base.Throwables.propagate;
 import static javax.jcr.observation.Event.NODE_REMOVED;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.metrics.RegistryService;
 
 import javax.annotation.PostConstruct;
@@ -42,6 +43,7 @@ import com.google.common.eventbus.EventBus;
  * change to the jcr:lastModified property.
  *
  * @author armintor@gmail.com
+ * @author ajs6f
  * @since Dec 5, 2013
  */
 public class NodeRemovalEventObserver implements EventListener {
@@ -109,7 +111,7 @@ public class NodeRemovalEventObserver implements EventListener {
                     eventBus.post(e);
                 }
             } catch (final RepositoryException ex) {
-                throw propagate(ex);
+                throw new RepositoryRuntimeException(ex);
             }
         }
     }

@@ -19,9 +19,9 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.utils.UncheckedPredicate;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
-import org.fcrepo.kernel.impl.utils.UncheckedPredicate;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -41,8 +41,8 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
-import static org.fcrepo.kernel.impl.utils.Streams.fromIterator;
-import static org.fcrepo.kernel.impl.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
+import static org.fcrepo.kernel.utils.UncheckedFunction.uncheck;
 
 /**
  * Embed all blank nodes in the RDF stream

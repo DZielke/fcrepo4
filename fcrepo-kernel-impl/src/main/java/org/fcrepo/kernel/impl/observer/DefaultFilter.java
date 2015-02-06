@@ -15,8 +15,8 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toCollection;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
@@ -34,9 +34,7 @@ import org.fcrepo.kernel.observer.EventFilter;
 
 import org.slf4j.Logger;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.function.Function;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -55,14 +53,10 @@ import java.util.function.Predicate;
  */
 public class DefaultFilter implements EventFilter {
 
-    private static final Logger LOGGER = getLogger(DefaultFilter.class);
+    private static final List<String> TYPES = asList(FEDORA_RESOURCE, FEDORA_BINARY,
+            FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_CONTAINER);
 
-    private static final Function<NodeType, String> nodetype2string = new Function<NodeType, String>() {
-        @Override
-        public String apply(final NodeType input) {
-            return input.getName();
-        }
-    };
+    private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
     /**
      * Default constructor.
@@ -79,12 +73,7 @@ public class DefaultFilter implements EventFilter {
     public boolean test(final Event event) {
         try {
             final org.modeshape.jcr.api.observation.Event modeEvent = getJcr21Event(event);
-            final Collection<String> mixinTypes =
-                    stream(modeEvent.getMixinNodeTypes()).map(nodetype2string).collect(toCollection(HashSet::new));
-            return mixinTypes.contains(FEDORA_RESOURCE)
-                    || mixinTypes.contains(FEDORA_BINARY)
-                    || mixinTypes.contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION)
-                    || mixinTypes.contains(FEDORA_CONTAINER);
+            return stream(modeEvent.getMixinNodeTypes()).map(NodeType::getName).anyMatch(TYPES::contains);
         } catch (final PathNotFoundException e) {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
             return false;

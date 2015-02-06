@@ -71,7 +71,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         testRoundtrip(pairtreeName);
     }
 
-    private void testRoundtrip(final String objName) throws IOException {
+    private static void testRoundtrip(final String objName) throws IOException {
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =

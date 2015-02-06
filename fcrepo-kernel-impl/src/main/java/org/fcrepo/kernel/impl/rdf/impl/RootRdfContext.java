@@ -21,8 +21,6 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.Objects.nonNull;
-import static java.util.Spliterator.IMMUTABLE;
-import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
@@ -30,6 +28,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NODE_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -41,7 +40,6 @@ import org.fcrepo.metrics.RegistryService;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -92,8 +90,7 @@ public class RootRdfContext extends NodeRdfContext {
 
             final Map<String, String> descriptors = Arrays.stream(repository.getDescriptorKeys())
                     .filter(key -> nonNull(repository.getDescriptor(key)))
-                    .collect(toMap((key) -> REPOSITORY_NAMESPACE + "repository." + key,
-                            key -> repository.getDescriptor(key)));
+                    .collect(toMap((key) -> REPOSITORY_NAMESPACE + "repository." + key, repository::getDescriptor));
             LOGGER.debug("Using repository descriptors: {}", descriptors);
             concat(descriptors.entrySet().stream().map(entry -> create(subject(), createURI(entry.getKey()),
                     createLiteral(entry.getValue()))).iterator());
@@ -102,8 +99,7 @@ public class RootRdfContext extends NodeRdfContext {
             final NodeTypeManager nodeTypeManager =
                     resource().getNode().getSession().getWorkspace().getNodeTypeManager();
             @SuppressWarnings("unchecked")
-            final Stream<NodeType> nodeTypes =
-                    StreamSupport.stream(spliteratorUnknownSize(nodeTypeManager.getAllNodeTypes(), IMMUTABLE), true);
+            final Stream<NodeType> nodeTypes = fromIterator(nodeTypeManager.getAllNodeTypes());
             concat(nodeTypes.map(type -> create(subject(), HAS_NODE_TYPE.asNode(), createLiteral(type.getName()))));
 
             /*

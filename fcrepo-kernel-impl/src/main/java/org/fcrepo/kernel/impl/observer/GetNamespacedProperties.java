@@ -17,13 +17,17 @@ package org.fcrepo.kernel.impl.observer;
 
 import java.util.function.Function;
 
+
 import org.fcrepo.kernel.observer.FedoraEvent;
 
+
 import org.slf4j.Logger;
+
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
 
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -53,23 +57,26 @@ public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEven
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
 
         final FedoraEvent event = new FedoraEvent(evt);
-        evt.getProperties().stream().forEach(
+        evt.getProperties().forEach(
                 property -> {
                     final String[] parts = property.split(":", 2);
                     if (parts.length == 2) {
                         final String prefix = parts[0];
                         try {
-                            event.addProperty(namespaceRegistry.getURI(prefix) + parts[1]);
+                            final String p = namespaceRegistry.getURI(prefix) + parts[1];
+                            LOGGER.trace("Adding property: {}", p);
+                            event.addProperty(p);
                         } catch (final RepositoryException ex) {
-                            LOGGER.trace("Prefix could not be dereferenced using the namespace registry: {}",
-                                    property);
+                            LOGGER.trace("Prefix could not be dereferenced by the namespace registry: {}", property);
+                            LOGGER.trace("Adding property: {}", property);
                             event.addProperty(property);
                         }
                     } else {
+                        LOGGER.trace("Adding property: {}", property);
                         event.addProperty(property);
                     }
                 });
-        evt.getTypes().stream().forEach(t -> event.addType(t));
+        evt.getTypes().forEach(event::addType);
         return event;
     }
 

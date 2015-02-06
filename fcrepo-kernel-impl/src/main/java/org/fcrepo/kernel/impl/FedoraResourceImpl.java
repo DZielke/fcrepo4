@@ -15,15 +15,10 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterators.concat;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.singletonIterator;
-import static com.google.common.collect.Iterators.transform;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
+import static java.util.function.Function.identity;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
@@ -31,6 +26,7 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
+import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -39,7 +35,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
@@ -48,12 +45,11 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import com.google.common.base.Converter;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -66,6 +62,8 @@ import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.utils.UncheckedFunction;
+import org.fcrepo.kernel.utils.UncheckedPredicate;
 import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
@@ -124,7 +122,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public Iterator<FedoraResource> getChildren() {
         try {
-            return concat(nodeToGoodChildren(node));
+            return nodeToGoodChildren(node).flatMap(identity()).iterator();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -132,47 +130,31 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /**
      * Get the "good" children for a node by skipping all pairtree nodes in the way.
-     * @param input
+     * @param node
      * @return
      * @throws RepositoryException
      */
-    private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
-        final Iterator<Node> allChildren = input.getNodes();
-        final Iterator<Node> children = filter(allChildren, not(nastyChildren));
-        return transform(children, new Function<Node, Iterator<FedoraResource>>() {
-
-            @Override
-            public Iterator<FedoraResource> apply(final Node input) {
-                try {
-                    if (input.isNodeType(FEDORA_PAIRTREE)) {
-                        return concat(nodeToGoodChildren(input));
-                    }
-                    return singletonIterator(nodeToObjectBinaryConverter.convert(input));
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
+    private Stream<Stream<FedoraResource>> nodeToGoodChildren(final Node node) throws RepositoryException {
+        final Iterator<Node> allChildren = node.getNodes();
+        final Stream<Node> goodChildren = fromIterator(allChildren).filter(nastyChildren.negate());
+        return goodChildren.map(UncheckedFunction.uncheck((final Node n) -> {
+            if (n.isNodeType(FEDORA_PAIRTREE)) {
+                return nodeToGoodChildren(n).flatMap(identity());
             }
-        });
+            return Stream.of(nodeToObjectBinaryConverter.convert(n));
+        }));
     }
     /**
      * Children for whom we will not generate triples.
      */
-    private static Predicate<Node> nastyChildren =
-            new Predicate<Node>() {
-
-                @Override
-                public boolean apply(final Node n) {
-                    LOGGER.trace("Testing child node {}", n);
-                    try {
-                        return isInternalNode.test(n)
-                                || n.getName().equals(JCR_CONTENT)
-                                || TombstoneImpl.hasMixin(n)
-                                || n.getName().equals("#");
-                    } catch (final RepositoryException e) {
-                        throw new RepositoryRuntimeException(e);
-                    }
-                }
-            };
+    private static Predicate<Node> nastyChildren = UncheckedPredicate.uncheck(
+            n -> {
+                LOGGER.trace("Testing child node {}", n);
+                return isInternalNode.test(n)
+                        || n.getName().equals(JCR_CONTENT)
+                        || TombstoneImpl.hasMixin(n)
+                        || n.getName().equals("#");
+            });
 
 
     private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
@@ -332,11 +314,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public boolean hasType(final String type) {
         try {
-            if (isFrozen.apply(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
-                final List<String> types = newArrayList(
-                    transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), value2string)
-                );
-                return types.contains(type);
+            if (isFrozen.test(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
+                final Stream<Value> values = fromIterator(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)));
+                return values.map(value2string).anyMatch(type::equals);
             }
             return node.isNodeType(type);
         } catch (final PathNotFoundException e) {

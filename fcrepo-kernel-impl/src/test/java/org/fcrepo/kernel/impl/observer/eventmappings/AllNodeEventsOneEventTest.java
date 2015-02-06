@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
@@ -103,8 +104,8 @@ public class AllNodeEventsOneEventTest {
 
     @Test(expected = RepositoryRuntimeException.class)
     public void testError() throws RepositoryException {
-        when(mockEvent3.getPath()).thenThrow(new RepositoryException("expected"));
-
+        reset(mockEvent2);
+        when(mockEvent2.getIdentifier()).thenThrow(new RepositoryException("Expected."));
         final Stream<FedoraEvent> result = testMapping.apply(testStream);
         assertNotNull(result);
         result.count();
