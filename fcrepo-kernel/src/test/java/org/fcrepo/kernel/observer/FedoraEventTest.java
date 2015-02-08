@@ -44,6 +44,12 @@ public class FedoraEventTest {
 
     @Test(expected = java.lang.NullPointerException.class)
     @SuppressWarnings("unused")
+    public void testWrapNullEvent() {
+        new FedoraEvent((Event)null);
+    }
+
+    @Test(expected = java.lang.NullPointerException.class)
+    @SuppressWarnings("unused")
     public void testWrapNullFedoraEvent() {
         new FedoraEvent((FedoraEvent)null);
     }

@@ -38,6 +38,7 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.metrics.RegistryService;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -98,8 +99,8 @@ public class RootRdfContext extends NodeRdfContext {
 
             final NodeTypeManager nodeTypeManager =
                     resource().getNode().getSession().getWorkspace().getNodeTypeManager();
-            @SuppressWarnings("unchecked")
-            final Stream<NodeType> nodeTypes = fromIterator(nodeTypeManager.getAllNodeTypes());
+            final Iterator<NodeType> allNodeTypes = nodeTypeManager.getAllNodeTypes();
+            final Stream<NodeType> nodeTypes = fromIterator(allNodeTypes);
             concat(nodeTypes.map(type -> create(subject(), HAS_NODE_TYPE.asNode(), createLiteral(type.getName()))));
 
             /*

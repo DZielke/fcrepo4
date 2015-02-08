@@ -20,6 +20,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraResource;
+
 import org.fcrepo.kernel.utils.UncheckedPredicate;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
@@ -83,12 +84,16 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             final Node container = property.getParent();
             return container.isNodeType(LDP_DIRECT_CONTAINER) || container.isNodeType(LDP_INDIRECT_CONTAINER);
 <<<<<<< HEAD
+<<<<<<< HEAD
     });
 =======
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     };
+=======
+    });
+>>>>>>> Minor code cleanup
 
     private final Function<Property, Stream<Triple>> property2triples = uncheck(p -> memberRelations(nodeConverter
             .convert(p.getParent())));
@@ -137,6 +142,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 =======
         final Iterator<FedoraResource> memberNodesIterator = container.getChildren();
         final Stream<FedoraResource> memberNodes = fromIterator(memberNodesIterator);
+<<<<<<< HEAD
         return memberNodes.flatMap(child -> {
 
             try {
@@ -167,6 +173,20 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
 >>>>>>> Further propagation of the Streams API
+=======
+        return memberNodes.flatMap(UncheckedFunction.uncheck(child -> {
+            final com.hp.hpl.jena.graph.Node childSubject;
+            if (child instanceof NonRdfSourceDescription) {
+                childSubject = translator().reverse()
+                        .convert(((NonRdfSourceDescription) child).getDescribedResource())
+                        .asNode();
+            } else {
+                childSubject = translator().reverse().convert(child).asNode();
+            }
+
+            if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
+                return Stream.of(create(subject(), memberRelation, childSubject));
+>>>>>>> Minor code cleanup
             }
             final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
                     createResource(insertedContainerProperty), null);
@@ -175,9 +195,17 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 return empty();
             }
 
+<<<<<<< HEAD
             final Stream<Value> values = new PropertyValueStream(child.getProperty(insertedContentProperty));
             return values.map(v -> new ValueConverter(session(), translator()).convert(v).asNode()).map(
                     o -> create(topic(), memberRelation, o));
+=======
+            final PropertyValueIterator valuesIterator =
+                    new PropertyValueIterator(child.getProperty(insertedContentProperty));
+            final Stream<Value> values = fromIterator(valuesIterator);
+            return values.map(v -> create(subject(), memberRelation, new ValueConverter(session(),
+                    translator()).convert(v).asNode()));
+>>>>>>> Minor code cleanup
         }));
     }
 }

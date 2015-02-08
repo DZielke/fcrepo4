@@ -32,7 +32,7 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
@@ -161,7 +161,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
         @Override
         public boolean test(final Node n) {
-            checkNotNull(n, "null is neither internal nor not internal!");
+            requireNonNull(n, "null is neither internal nor not internal!");
             try {
                 return n.isNodeType("mode:system");
             } catch (final RepositoryException e) {
