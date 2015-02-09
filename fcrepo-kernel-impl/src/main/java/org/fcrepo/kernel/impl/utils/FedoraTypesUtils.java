@@ -15,15 +15,29 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
+
+
+
+import java.util.stream.Stream;
 
 import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
+import org.fcrepo.kernel.utils.UncheckedPredicate;
+
+
+
 
 import org.slf4j.Logger;
+
+
+
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -32,10 +46,14 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import static java.util.Objects.requireNonNull;
+
+
+
+import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -45,11 +63,14 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author ajs6f
  * @since Feb 14, 2013
  */
+@SuppressWarnings("unused")
 public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
     public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
 
     private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
+
+    private static List<Integer> REFERENCE_TYPES = asList(REFERENCE, WEAKREFERENCE);
 
     /**
      * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.models.Container}.
@@ -74,14 +95,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     /**
      * Predicate for determining whether this {@link FedoraResource} has a frozen node
      */
-    public static Predicate<FedoraResource> isFrozenNode =
-            new Predicate<FedoraResource>() {
-
-                @Override
-                public boolean test(final FedoraResource f) {
-                    return f.hasType(FROZEN_NODE) || f.getPath().contains(JCR_FROZEN_NODE);
-                }
-     };
+    public static Predicate<FedoraResource> isFrozenNode = f -> f.hasType(FROZEN_NODE) ||
+            f.getPath().contains(JCR_FROZEN_NODE);
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora
@@ -93,82 +108,42 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     /**
      * Check if a property is a reference property.
      */
-    public static Predicate<Property> isInternalReferenceProperty =
-        new Predicate<Property>() {
+    public static Predicate<Property> isInternalReferenceProperty = UncheckedPredicate
+            .uncheck(p -> (p.getType() == REFERENCE || p.getType() == WEAKREFERENCE)
+                    && p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX));
 
-            @Override
-            public boolean test(final Property p) {
-                try {
-                    return (p.getType() == REFERENCE || p.getType() == WEAKREFERENCE)
-                        && p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX);
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
-            }
-        };
 
-    /**
-    * Check whether a property is an internal property that should be suppressed
-    * from external output.
-    */
-    public static Predicate<Property> isInternalProperty =
-        new Predicate<Property>() {
-
-            @Override
-            public boolean test(final Property p) {
-                return JcrPropertyFunctions.isBinaryContentProperty.test(p)
-                        || isProtectedAndShouldBeHidden.test(p);
-            }
-        };
 
     /**
      * Check whether a property is protected (ie, cannot be modified directly) but is not one we've explicitly chosen
      * to include.
      */
-    public static Predicate<Property> isProtectedAndShouldBeHidden = new Predicate<Property>() {
 
-        @Override
-        public boolean test(final Property p) {
-            try {
-                if (!p.getDefinition().isProtected()) {
-                    return false;
-                } else if (p.getParent().isNodeType(FROZEN_NODE)) {
-                    // everything on a frozen node is protected
-                    // but we wish to display it anyway and there's
-                    // another mechanism in place to make clear that
-                    // things cannot be edited.
-                    return false;
-                } else {
-                    final String name = p.getName();
-                    for (final String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
-                        if (name.equals(exposedName)) {
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
+    public static Predicate<Property> isProtectedAndShouldBeHidden = UncheckedPredicate.uncheck(p -> {
+        if (!p.getDefinition().isProtected()) {
+            return false;
         }
-    };
+        if (p.getParent().isNodeType(FROZEN_NODE)) {
+            // everything on a frozen node is protected
+            // but we wish to display it anyway and there's
+            // another mechanism in place to make clear that
+            // things cannot be edited.
+            return false;
+        }
+        final String name = p.getName();
+        return !EXPOSED_PROTECTED_JCR_TYPES.contains(name);
+    });
 
     /**
-     * Check if a node is "internal" and should not be exposed e.g. via the REST
-     * API
+     * Check whether a property is an internal property that should be suppressed from external output.
      */
-    public static Predicate<Node> isInternalNode = new Predicate<Node>() {
+    public static Predicate<Property> isInternalProperty = p -> isBinaryContentProperty.test(p) ||
+            isProtectedAndShouldBeHidden.test(p);
 
-        @Override
-        public boolean test(final Node n) {
-            requireNonNull(n, "null is neither internal nor not internal!");
-            try {
-                return n.isNodeType("mode:system");
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
-    };
+    /**
+     * Check if a node is "internal" and should not be exposed e.g. via the REST API
+     */
+    public static Predicate<Node> isInternalNode = UncheckedPredicate.uncheck(n -> n.isNodeType("mode:system"));
 
     /**
      * Get the JCR property type ID for a given property name. If unsure, mark
@@ -177,20 +152,12 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @param node the JCR node to add the property on
      * @param propertyName the property name
      * @return a PropertyType value
-     * @throws RepositoryException if repository exception occurred
      */
-    public static int getPropertyType(final Node node, final String propertyName)
-            throws RepositoryException {
+    public static int getPropertyType(final Node node, final String propertyName) {
         LOGGER.debug("Getting type of property: {} from node: {}",
                 propertyName, node);
-        final PropertyDefinition def =
-                getDefinitionForPropertyName(node, propertyName);
-
-        if (def == null) {
-            return UNDEFINED;
-        }
-
-        return def.getRequiredType();
+        final Optional<PropertyDefinition> def = getDefinitionForPropertyName(node, propertyName);
+        return def.map(PropertyDefinition::getRequiredType).orElse(UNDEFINED);
     }
 
     /**
@@ -207,14 +174,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     public static boolean isMultivaluedProperty(final Node node,
                                                 final String propertyName)
             throws RepositoryException {
-        final PropertyDefinition def =
-                getDefinitionForPropertyName(node, propertyName);
-
-        if (def == null) {
-            return true;
-        }
-
-        return def.isMultiple();
+        final Optional<PropertyDefinition> def = getDefinitionForPropertyName(node, propertyName);
+        return def.map(PropertyDefinition::isMultiple).orElse(true);
     }
 
     /**
@@ -224,30 +185,19 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @param node the node to use for inferring the property definition
      * @param propertyName the property name to retrieve a definition for
      * @return a JCR PropertyDefinition, if available, or null
-     * @throws javax.jcr.RepositoryException if repository exception occurred
      */
-    public static PropertyDefinition getDefinitionForPropertyName(final Node node,
-                                                                  final String propertyName)
-            throws RepositoryException {
-
-        final NodeType primaryNodeType = node.getPrimaryNodeType();
-        final PropertyDefinition[] propertyDefinitions = primaryNodeType.getPropertyDefinitions();
-        LOGGER.debug("Looking for property name: {}", propertyName);
-        for (final PropertyDefinition p : propertyDefinitions) {
-            LOGGER.debug("Checking property: {}", p.getName());
-            if (p.getName().equals(propertyName)) {
-                return p;
-            }
+    public static Optional<PropertyDefinition> getDefinitionForPropertyName(final Node node,
+            final String propertyName) {
+        try {
+            final PropertyDefinition[] propertyDefinitions = node.getPrimaryNodeType().getPropertyDefinitions();
+            final Stream<NodeType> types =
+                    Stream.concat(Stream.of(node.getPrimaryNodeType()), Stream.of(node.getMixinNodeTypes()));
+            LOGGER.debug("Looking for property name: {}", propertyName);
+            return types.map(NodeType::getPropertyDefinitions).flatMap(Arrays::stream).filter(
+                    p -> propertyName.equals(p.getName())).findAny();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-
-        for (final NodeType nodeType : node.getMixinNodeTypes()) {
-            for (final PropertyDefinition p : nodeType.getPropertyDefinitions()) {
-                if (p.getName().equals(propertyName)) {
-                    return p;
-                }
-            }
-        }
-        return null;
     }
 
     /**
@@ -265,12 +215,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @return original property name of the reference property
      */
     public static String getReferencePropertyOriginalName(final String refPropertyName) {
-        final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);
-
-        if (i < 0) {
-            return refPropertyName;
-        }
-        return refPropertyName.substring(0, i);
+        return refPropertyName.endsWith(REFERENCE_PROPERTY_SUFFIX) ? refPropertyName.substring(0, refPropertyName
+                .lastIndexOf(REFERENCE_PROPERTY_SUFFIX)) : refPropertyName;
     }
 
     /**
@@ -281,11 +227,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @throws RepositoryException if repository exception occurred
      */
     public static boolean isReferenceProperty(final Node node, final String propertyName) throws RepositoryException {
-        final PropertyDefinition propertyDefinition = getDefinitionForPropertyName(node, propertyName);
-
-        return propertyDefinition != null &&
-                (propertyDefinition.getRequiredType() == REFERENCE
-                        || propertyDefinition.getRequiredType() == WEAKREFERENCE);
+        final Optional<PropertyDefinition> propertyDefinition = getDefinitionForPropertyName(node, propertyName);
+        return propertyDefinition.map(p -> REFERENCE_TYPES.contains(p.getRequiredType())).orElse(false);
     }
 
 

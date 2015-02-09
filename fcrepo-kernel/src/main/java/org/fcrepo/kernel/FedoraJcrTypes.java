@@ -15,6 +15,12 @@
  */
 package org.fcrepo.kernel;
 
+import static java.util.Arrays.asList;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
+
 /**
  * Convenience class with constants for commonly used JCR types.
  *
@@ -81,7 +87,6 @@ public interface FedoraJcrTypes {
     String LDP_IS_MEMBER_OF_RELATION = "ldp:isMemberOfRelation";
     String LDP_MEMBER_RESOURCE = "ldp:membershipResource";
 
-    String [] EXPOSED_PROTECTED_JCR_TYPES
-        = new String[] { JCR_UUID, JCR_LASTMODIFIED, JCR_CREATED, JCR_CREATEDBY,
-                         JCR_PRIMARY_TYPE, JCR_MIXIN_TYPES };
+    List<String> EXPOSED_PROTECTED_JCR_TYPES = asList(JCR_UUID, JCR_LASTMODIFIED, JCR_CREATED, JCR_CREATEDBY,
+            JCR_PRIMARY_TYPE, JCR_MIXIN_TYPES);
 }

@@ -205,6 +205,7 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsReferenceProperty() throws RepositoryException {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[] { mockPropertyDefinition });
         when(mockPropertyDefinition.getName()).thenReturn("some:reference_property");
         when(mockPropertyDefinition.getRequiredType()).thenReturn(PropertyType.REFERENCE);
@@ -214,6 +215,7 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsReferencePropertyForOtherPropertyTypes() throws RepositoryException {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[] { mockPropertyDefinition });
         when(mockPropertyDefinition.getName()).thenReturn("some:reference_property");
         when(mockPropertyDefinition.getRequiredType()).thenReturn(PropertyType.BINARY);
