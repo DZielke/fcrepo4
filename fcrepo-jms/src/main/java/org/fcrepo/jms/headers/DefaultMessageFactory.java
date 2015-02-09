@@ -15,25 +15,24 @@
  */
 package org.fcrepo.jms.headers;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Set;
-
 import javax.jcr.RepositoryException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
-import org.apache.commons.lang.StringUtils;
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
+
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -72,7 +71,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     private void setBaseURL(final FedoraEvent event) {
         try {
             final String userdata = event.getUserData();
-            if (!StringUtils.isBlank(userdata)) {
+            if (!isNullOrEmpty(userdata)) {
                 final JsonObject json = new JsonParser().parse(userdata).getAsJsonObject();
                 String url = json.get("baseURL").getAsString();
                 while (url.endsWith("/")) {
@@ -84,8 +83,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
             } else {
                 LOGGER.warn("MessageFactory baseURL is empty!");
             }
-
-        } catch ( final Exception ex ) {
+        } catch (final RepositoryException ex) {
             LOGGER.warn("Error setting baseURL", ex);
         }
     }
@@ -116,15 +114,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     }
 
     private static String getEventURIs(final Set<Integer> types) {
-        final String uris = Joiner.on(',').join(Iterables.transform(types, new Function<Integer, String>() {
-
-            @Override
-            public String apply(final Integer type) {
-                return REPOSITORY_NAMESPACE + EventType.valueOf(type);
-            }
-        }));
-        LOGGER.debug("Constructed event type URIs: {}", uris);
-        return uris;
+        return types.stream().map(EventType::valueOf).map(s -> REPOSITORY_NAMESPACE + s).collect(joining(","));
     }
 
     private static final Logger LOGGER = getLogger(DefaultMessageFactory.class);

@@ -15,9 +15,10 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+
 import org.fcrepo.kernel.exception.MalformedRdfException;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +26,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
 import java.io.IOException;
-
+import static java.util.Base64.getDecoder;
 import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
 
@@ -50,7 +51,7 @@ public class MalformedRdfExceptionMapperTest {
         assertEquals("data", link.getUri().getScheme());
         final String[] split = link.getUri().toString().split(",", 2);
         assertEquals("Constraint data appears malformed", 2, split.length);
-        assertEquals("xyz", IOUtils.toString(Base64.decodeBase64(split[1].getBytes()), "UTF-8"));
+        assertEquals("xyz", IOUtils.toString(getDecoder().decode(split[1].getBytes()), "UTF-8"));
     }
 
     @Test

@@ -16,12 +16,14 @@
 package org.fcrepo.integration.mint;
 
 import org.fcrepo.mint.HttpPidMinter;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
+
 import static java.lang.Integer.parseInt;
 import static org.junit.Assert.assertEquals;
 
@@ -54,7 +56,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST", "", "", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -64,7 +66,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST", "", "", " ", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -74,21 +76,24 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "WHATEVER", "", "", " ", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
     @Test (expected = IllegalArgumentException.class)
+    @SuppressWarnings("unused")
     public void shouldNotAccept1() {
         new HttpPidMinter(null, "POST", "", "", ".*/", "");
     }
 
     @Test (expected = IllegalArgumentException.class)
+    @SuppressWarnings("unused")
     public void shouldNotAccept2() {
         new HttpPidMinter(null, "POST", "", "", ".*/", " ");
     }
 
     @Test (expected = IllegalArgumentException.class)
+    @SuppressWarnings("unused")
     public void shouldNotAccept3() {
         new HttpPidMinter("http://test", "POST", "", "", ".*/", "\\wrongxpath");
     }
@@ -99,7 +104,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "GET", "", "", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -109,7 +114,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "PUT", "", "", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -119,7 +124,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, null, "", "", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -130,7 +135,7 @@ public class HttpPidMinterIT{
         addHandler("<test><id>baz</id></test>", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST"
                 , "", "", "", "/test/id");
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "baz");
     }
 
@@ -141,7 +146,7 @@ public class HttpPidMinterIT{
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST",
                 "fedoraAdmin", "secret", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -152,7 +157,7 @@ public class HttpPidMinterIT{
         addHandler("<test><id>baz</id></tet>", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST"
                 , "", "", "", "/test/id");
-        minter.mintPid();
+        minter.get();
     }
 
 }

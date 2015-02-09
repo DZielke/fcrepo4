@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.identifiers;
 
+import java.util.function.Supplier;
+
 /**
  * Defines the behavior of a component that can accept responsibility
  * for the creation of Fedora PIDs.
@@ -23,12 +25,8 @@ package org.fcrepo.kernel.identifiers;
  * @author ajs6f
  * @since Feb 7, 2013
  */
-public interface PidMinter {
-
+public interface PidMinter extends Supplier<String> {
     /**
-     * Mint a new PID
-     * @return a new identifier
+     * A Supplier of PIDs.
      */
-    String mintPid();
-
 }

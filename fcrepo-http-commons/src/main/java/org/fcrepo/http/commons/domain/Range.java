@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
  * Range header parsing logic
  *
  * @author awoods
+ * @author ajs6f
  */
 public class Range {
 
@@ -108,7 +109,6 @@ public class Range {
             return new Range();
         }
 
-        matcher.matches();
         final String from = matcher.group(1);
         final String to = matcher.group(2);
 

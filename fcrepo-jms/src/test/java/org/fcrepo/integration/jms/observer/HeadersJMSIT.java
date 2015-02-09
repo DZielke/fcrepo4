@@ -16,7 +16,6 @@
 package org.fcrepo.integration.jms.observer;
 
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.any;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static javax.jcr.observation.Event.NODE_ADDED;
@@ -34,7 +33,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
 import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -59,9 +57,6 @@ import org.slf4j.Logger;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import com.google.common.base.Predicate;
-
 
 /**
  * <p>
@@ -128,16 +123,12 @@ public class HeadersJMSIT implements MessageListener {
 
             @Override
             public Boolean call() {
-                return any(messages, new Predicate<Message>() {
-
-                    @Override
-                    public boolean apply(final Message message) {
-                        try {
-                            return getIdentifier(message).equals(id) &&
-                                    getEventTypes(message).contains(eventType);
-                        } catch (final JMSException e) {
-                            throw propagate(e);
-                        }
+                return messages.stream().anyMatch(m -> {
+                    try {
+                        return getIdentifier(m).equals(id) &&
+                                getEventTypes(m).contains(eventType);
+                    } catch (final JMSException e) {
+                        throw propagate(e);
                     }
                 });
             }

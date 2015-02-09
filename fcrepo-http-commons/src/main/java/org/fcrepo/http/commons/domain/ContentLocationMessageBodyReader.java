@@ -16,9 +16,8 @@
 package org.fcrepo.http.commons.domain;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.fcrepo.kernel.services.ExternalContentService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.WebApplicationException;
@@ -26,29 +25,29 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
+import java.util.function.Predicate;
 
+import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 /**
  * Provide an InputStream either from the POST/PUT body, or by resolving a Content-Location URI
  * @author cabeer
+ * @author ajs6f
  */
 @Provider
 public class ContentLocationMessageBodyReader implements MessageBodyReader<InputStream> {
 
-    private static final Predicate<Annotation> HAS_CONTENT_LOCATION_PREDICATE = new Predicate<Annotation>() {
-        @Override
-        public boolean apply(final Annotation annotation) {
-            return annotation.annotationType().equals(ContentLocation.class);
-        }
-    };
+    private static final Predicate<Annotation> HAS_CONTENT_LOCATION_PREDICATE = a -> a.annotationType().equals(
+            ContentLocation.class);
+
     /**
      * The fcrepo node service
      */
@@ -61,7 +60,7 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
                               final Annotation[] annotations,
                               final MediaType mediaType) {
         return InputStream.class.isAssignableFrom(type) &&
-                   Iterables.any(Arrays.asList(annotations), HAS_CONTENT_LOCATION_PREDICATE);
+                asList(annotations).stream().anyMatch(HAS_CONTENT_LOCATION_PREDICATE);
     }
 
     @Override
@@ -77,7 +76,7 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
 
             try {
                 return contentService.retrieveExternalContent(new URI(location));
-            } catch (URISyntaxException e) {
+            } catch (final URISyntaxException e) {
                 throw new WebApplicationException(e, BAD_REQUEST);
             }
 

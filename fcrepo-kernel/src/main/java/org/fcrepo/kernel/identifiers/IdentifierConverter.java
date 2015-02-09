@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.identifiers;
 
+import java.util.function.Function;
+
 import com.google.common.base.Converter;
 
 /**
@@ -26,7 +28,7 @@ import com.google.common.base.Converter;
  * @since Mar 26, 2014
  * @param <B> the type to and from which we are translating
  */
-public abstract class IdentifierConverter<A, B> extends Converter<A, B> {
+public abstract class IdentifierConverter<A, B> extends Converter<A, B> implements Function<A, B>{
 
     /**
      * Check if the given resource is in the domain of this converter

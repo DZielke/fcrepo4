@@ -34,7 +34,7 @@ public class UUIDPathMinterTest {
     @Test
     public void testMintPid() {
 
-        final String pid = new UUIDPathMinter(3, 1).mintPid();
+        final String pid = new UUIDPathMinter(3, 1).get();
 
         assertTrue("PID wasn't a UUID path", compile(PID_PATTERN).matcher(pid)
                 .find());
@@ -44,7 +44,7 @@ public class UUIDPathMinterTest {
     @Test
     public void testMintPidWithoutSegments() {
 
-        final String pid = new UUIDPathMinter(0, 0).mintPid();
+        final String pid = new UUIDPathMinter(0, 0).get();
 
         assertTrue("PID wasn't a UUID path", compile(UUID_PATTERN).matcher(pid)
                 .find());

@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -35,6 +36,7 @@ import com.hp.hpl.jena.query.QueryParseException;
  * Handles Sparql query parsing exceptions thrown when querying or updating.
  *
  * @author whikloj
+ * @author ajs6f
  * @since September 9, 2014
  */
 @Provider
@@ -43,15 +45,15 @@ ExceptionMapper<QueryParseException> {
 
     private static final Logger LOGGER = getLogger(QueryParseExceptionMapper.class);
 
+    private static final Pattern namespacePattern = compile("Unresolved prefixed name: (\\w+:\\w+)");
+
     @Override
     public Response toResponse(final QueryParseException e) {
 
         LOGGER.debug("Captured a query parse exception {}", e.getMessage());
         if (e.getMessage().matches(".* Unresolved prefixed name: .*")) {
-            final Pattern namespacePattern =
-                Pattern.compile("Unresolved prefixed name: (\\w+:\\w+)");
-            final Matcher namespaceMatch =
-                namespacePattern.matcher(e.getMessage());
+
+            final Matcher namespaceMatch = namespacePattern.matcher(e.getMessage());
             if (namespaceMatch.find()) {
                 final String msg =
                     String.format(

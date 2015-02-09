@@ -18,8 +18,8 @@ package org.fcrepo.http.commons.api.rdf;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Iterables.concat;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.replaceOnce;
 import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
@@ -63,7 +63,6 @@ import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.base.Converter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -72,6 +71,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * URI translation.
  *
  * @author cabeer
+ * @author ajs6f
  * @since 10/5/14
  */
 public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraResource> {
@@ -381,25 +381,15 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             translationChain = getTranslationChain();
 
             final Converter<String,String> transactionIdentifierConverter = new TransactionIdentifierConverter(session);
-
-            @SuppressWarnings("unchecked")
-            final ImmutableList<Converter<String, String>> chain = copyOf(
-                    concat(newArrayList(transactionIdentifierConverter),
-                            translationChain));
-            setTranslationChain(chain);
+            setTranslationChain(copyOf(concat(singletonList(transactionIdentifierConverter), translationChain)));
         }
     }
 
     private void setTranslationChain(final List<Converter<String, String>> chained) {
 
         translationChain = chained;
-
-        for (final Converter<String, String> t : translationChain) {
-            forward = forward.andThen(t);
-        }
-        for (final Converter<String, String> t : Lists.reverse(translationChain)) {
-            reverse = reverse.andThen(t.reverse());
-        }
+        forward = translationChain.stream().reduce(identity(), (a, b) -> a.andThen(b));
+        reverse = Lists.reverse(translationChain).stream().reduce(identity(), (a, b) -> a.andThen(b.reverse()));
     }
 
 

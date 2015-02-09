@@ -70,7 +70,7 @@ public class UUIDPathMinter implements PidMinter {
      * @return uuid
      */
     @Override
-    public String mintPid() {
+    public String get() {
 
         try (final Timer.Context context = timer.time()) {
             final String s = randomUUID().toString();

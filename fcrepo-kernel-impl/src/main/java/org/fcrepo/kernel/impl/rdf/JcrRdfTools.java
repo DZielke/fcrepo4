@@ -409,7 +409,7 @@ public class JcrRdfTools {
 
         if (!skolemizedBnodeMap.containsKey(id)) {
             jcrTools.findOrCreateNode(session, skolemizedPrefix());
-            final String pid = pidMinter.mintPid();
+            final String pid = pidMinter.get();
             final String path = skolemizedPrefix() + pid;
             final Node preexistingNode = getClosestExistingAncestor(session, path);
             final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
