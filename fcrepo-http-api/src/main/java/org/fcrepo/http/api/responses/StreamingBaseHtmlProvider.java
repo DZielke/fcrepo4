@@ -20,11 +20,11 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getAllValuesForPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.mixinTypesPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.ImmutableMap.builder;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -63,12 +63,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
+
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.http.commons.session.SessionFactory;
@@ -76,6 +78,7 @@ import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -133,7 +136,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
         @Override
         public boolean apply(final NodeType nodeType) {
             final String nodeTypeName = nodeType.getName();
-            if (isBlank(nodeTypeName)) {
+            if (isNullOrEmpty(nodeTypeName)) {
                 return false;
             }
             return velocity.resourceExists(getTemplateLocation(nodeTypeName));
@@ -143,7 +146,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     private final Predicate<String> acceptWhenTemplateMapContainsKey = new Predicate<String>() {
         @Override
         public boolean apply(final String key) {
-            if (isBlank(key)) {
+            if (isNullOrEmpty(key)) {
                 return false;
             }
             return templatesMap.containsKey(key);

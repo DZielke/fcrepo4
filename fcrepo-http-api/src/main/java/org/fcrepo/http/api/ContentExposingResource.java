@@ -16,6 +16,7 @@
 package org.fcrepo.http.api;
 
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
@@ -25,7 +26,6 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.kernel.FedoraJcrTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
@@ -587,7 +587,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * Create a checksum URI object.
      **/
     private static URI checksumURI( final String checksum ) {
-        if (!isBlank(checksum)) {
+        if (!isNullOrEmpty(checksum)) {
             return URI.create(checksum);
         }
         return null;

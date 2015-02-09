@@ -47,6 +47,7 @@ import org.springframework.context.annotation.Scope;
  * Serialization for nodes
  *
  * @author awoods
+ * @author ajs6f
  */
 @Scope("request")
 @Path("/{path: .*}/fcr:export")
@@ -101,7 +102,7 @@ public class FedoraExport extends FedoraBaseResource {
                             LOGGER.info("Serialized to {}, '{}'", format, externalPath);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
-                        } catch (InvalidSerializationFormatException e) {
+                        } catch (final InvalidSerializationFormatException e) {
                             throw new BadRequestException(e.getMessage());
                         }
                     }

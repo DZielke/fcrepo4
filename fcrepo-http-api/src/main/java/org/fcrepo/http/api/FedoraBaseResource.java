@@ -17,14 +17,17 @@ package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.models.Tombstone;
 import org.fcrepo.kernel.exception.TombstoneException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+
 import org.slf4j.Logger;
 
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.ObservationManager;
 import javax.ws.rs.core.UriInfo;
@@ -74,6 +77,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     /**
      * Set the baseURL for JMS events.
      * @param uriInfo the uri info
+     * TODO remove this misplaced concern from HTTP layer
      **/
     protected void setUpJMSBaseURIs(final UriInfo uriInfo) {
         try {
@@ -82,7 +86,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
             final ObservationManager obs = session().getWorkspace().getObservationManager();
             final String json = "{\"baseURL\":\"" + baseURL.toString() + "\"}";
             obs.setUserData(json);
-        } catch ( Exception ex ) {
+        } catch (final RepositoryException ex) {
             LOGGER.warn("Error setting baseURL", ex);
         }
     }

@@ -16,6 +16,7 @@
 package org.fcrepo.http.api;
 
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -26,7 +27,6 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -70,6 +70,10 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.jena.riot.RiotException;
+
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -81,9 +85,6 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -336,7 +337,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream);
-            if (isBlank(requestBody)) {
+            if (isNullOrEmpty(requestBody)) {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
 

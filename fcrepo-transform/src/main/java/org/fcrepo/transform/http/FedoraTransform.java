@@ -54,7 +54,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.fcrepo.http.api.ContentExposingResource;
-import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.TransformationFactory;
 import org.jvnet.hk2.annotations.Optional;
@@ -195,10 +194,5 @@ public class FedoraTransform extends ContentExposingResource {
     @Override
     protected String externalPath() {
         return externalPath;
-    }
-
-    @Override
-    protected void addResourceHttpHeaders(final FedoraResource resource) {
-        throw new UnsupportedOperationException();
     }
 }

@@ -15,26 +15,19 @@
  */
 package org.fcrepo.transform;
 
-import com.google.common.base.Function;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import java.io.InputStream;
+import java.util.function.Function;
 
 /**
  * Generic interface for transforming a resource's properties
  * to an implementation-defined type
  *
  * @author cbeer
+ * @author ajs6f
  */
 public interface Transformation<T> extends Function<RdfStream, T> {
-
-    /**
-     * Execute a transform on an rdf stream
-     * @param stream the stream
-     * @return transformed output
-     */
-    @Override
-    T apply(final RdfStream stream);
 
     /**
      * Get the Query the transformation is using

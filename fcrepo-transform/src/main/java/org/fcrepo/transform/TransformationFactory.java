@@ -34,7 +34,7 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
  */
 public class TransformationFactory {
 
-    private Map<String, Transformation<?>> mimeToTransform = new HashMap<>();
+    private final Map<String, Transformation<?>> mimeToTransform = new HashMap<>();
 
     /**
      * Get a new TransformationFactory with the default classes
@@ -53,6 +53,7 @@ public class TransformationFactory {
      * @return a Transformation
      */
 
+    @SuppressWarnings("unchecked")
     public <T> Transformation<T> getTransform(final MediaType contentType, final InputStream inputStream) {
         final String mimeType = contentType.toString();
         if (mimeToTransform.containsKey(mimeType)) {

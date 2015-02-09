@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -23,7 +24,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -57,6 +57,7 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -148,7 +149,7 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
-        if (!isBlank(slug)) {
+        if (!isNullOrEmpty(slug)) {
             LOGGER.info("Request to add version '{}' for '{}'", slug, externalPath);
             final String path = toPath(translator(), externalPath);
             versionService.createVersion(session, path, slug);
