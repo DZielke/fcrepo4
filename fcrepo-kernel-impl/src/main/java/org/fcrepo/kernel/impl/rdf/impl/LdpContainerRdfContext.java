@@ -196,6 +196,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             final Stream<Value> values = new PropertyValueStream(child.getProperty(insertedContentProperty));
             return values.map(v -> new ValueConverter(session(), translator()).convert(v).asNode()).map(
                     o -> create(topic(), memberRelation, o));
@@ -203,6 +204,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             final PropertyValueIterator valuesIterator =
                     new PropertyValueIterator(child.getProperty(insertedContentProperty));
             final Stream<Value> values = fromIterator(valuesIterator);
+=======
+            final Stream<Value> values = new PropertyValueStream(child.getProperty(insertedContentProperty));
+>>>>>>> Stream-ifying Property-Value conversion
             return values.map(v -> create(subject(), memberRelation, new ValueConverter(session(),
                     translator()).convert(v).asNode()));
 >>>>>>> Minor code cleanup

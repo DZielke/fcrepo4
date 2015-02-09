@@ -23,12 +23,11 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import static com.google.common.collect.ImmutableList.of;
-import static com.google.common.collect.Iterators.contains;
-import static com.google.common.collect.Lists.newArrayList;
+import static java.util.stream.Collectors.toCollection;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -39,7 +38,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  */
 public class PropertyValueIteratorTest {
 
-    private PropertyValueIterator testObj;
+    private PropertyValueStream testObj;
 
     @Mock
     private Property mockProperty;
@@ -69,21 +68,21 @@ public class PropertyValueIteratorTest {
 
     @Test
     public void testSingleValueSingleProperty() {
-        testObj = new PropertyValueIterator(mockProperty);
-        assertTrue(contains(testObj, value1));
+        testObj = new PropertyValueStream(mockProperty);
+        assertTrue(testObj.anyMatch(value1::equals));
     }
 
     @Test
     public void testMultiValueSingleProperty() {
-        testObj = new PropertyValueIterator(mockMultivaluedProperty);
-        final List<Value> values = newArrayList(testObj);
+        testObj = new PropertyValueStream(mockMultivaluedProperty);
+        final List<Value> values = testObj.collect(toCollection(ArrayList::new));
         assertTrue(values.containsAll(of(value2, value3)));
     }
 
     @Test
     public void testSingleValuePropertyIterator() {
-        testObj = new PropertyValueIterator(propertyIterator);
-        final List<Value> values = newArrayList(testObj);
+        testObj = new PropertyValueStream(propertyIterator);
+        final List<Value> values = testObj.collect(toCollection(ArrayList::new));
         assertTrue(values.containsAll(of(value1, value2, value3)));
     }
 }

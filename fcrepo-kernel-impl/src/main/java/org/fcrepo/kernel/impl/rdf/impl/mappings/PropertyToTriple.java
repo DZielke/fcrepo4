@@ -19,7 +19,6 @@ import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
-import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.function.Function;
@@ -73,7 +72,7 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
     @Override
     public Stream<Triple> apply(final Property p) {
         LOGGER.trace("Encountering property: {}", p);
-        return fromIterator(new PropertyValueIterator(p)).map(v -> propertyvalue2triple(p, v));
+        return new PropertyValueStream(p).map(v -> propertyvalue2triple(p, v));
     }
 
     /**

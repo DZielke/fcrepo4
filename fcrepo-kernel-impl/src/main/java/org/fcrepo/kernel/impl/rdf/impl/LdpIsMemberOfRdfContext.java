@@ -22,7 +22,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
-import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
+import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueStream;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -30,7 +30,6 @@ import javax.jcr.RepositoryException;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Arrays.asList;
@@ -44,7 +43,6 @@ import static org.fcrepo.kernel.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
-import static org.fcrepo.kernel.utils.Streams.fromIterator;
 
 /**
  * @author cabeer
@@ -109,11 +107,11 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
                 return;
             }
 
-            final PropertyValueIterator values
-                    = new PropertyValueIterator(resource().getProperty(insertedContentProperty));
+            final PropertyValueStream values
+                    = new PropertyValueStream(resource().getProperty(insertedContentProperty));
 
             final Stream<RDFNode> insertedContentRelations =
-                    fromIterator(transform(values, valueConverter)).filter(
+                    values.map( valueConverter).filter(
                             n -> n.isURIResource() && translator().inDomain(n.asResource()));
 
             concat(insertedContentRelations.map(n -> create(n.asNode(), memberRelation, membershipResource)));
