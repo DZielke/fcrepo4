@@ -130,6 +130,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         return container.getChildren().flatMap(uncheck(child -> {
 
             final FedoraResource childResource =
@@ -174,6 +175,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 throw new RepositoryRuntimeException(e);
 >>>>>>> Further propagation of the Streams API
 =======
+=======
+        final Stream<FedoraResource> memberNodes = container.getChildren();
+>>>>>>> Propagating Streams API into the core models
         return memberNodes.flatMap(UncheckedFunction.uncheck(child -> {
             final com.hp.hpl.jena.graph.Node childSubject;
             if (child instanceof NonRdfSourceDescription) {

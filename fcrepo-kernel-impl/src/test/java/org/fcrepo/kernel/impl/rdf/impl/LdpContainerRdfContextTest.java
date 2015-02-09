@@ -15,12 +15,15 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.google.common.collect.Iterators;
+import java.util.stream.Stream;
+
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.testutilities.TestNodeIterator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -50,6 +53,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class LdpContainerRdfContextTest {
     private static final Logger LOGGER = getLogger(LdpContainerRdfContextTest.class);
@@ -137,7 +141,7 @@ public class LdpContainerRdfContextTest {
     public void testLdpResourceWithBasicContainer() throws RepositoryException {
         when(mockResource.hasType(LDP_BASIC_CONTAINER)).thenReturn(true);
         when(mockNode.getReferences(LDP_MEMBER_RESOURCE)).thenReturn(new TestPropertyIterator());
-        when(mockResource.getChildren()).thenReturn(Iterators.singletonIterator(mockResource));
+        when(mockResource.getChildren()).thenReturn(Stream.of(mockResource));
         when(mockChild.getName()).thenReturn("b");
         when(mockChild.getPath()).thenReturn("/b");
         testObj = new LdpContainerRdfContext(mockResource, subjects);

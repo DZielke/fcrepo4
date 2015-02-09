@@ -27,11 +27,8 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 
 import java.util.function.Function;
-import java.util.stream.Stream;
-
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -57,8 +54,7 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
         if (resource.getNode().hasNodes()) {
             LOGGER.trace("Found children of this resource.");
-            final Stream<FedoraResource> children = fromIterator(resource().getChildren());
-            concat(children.map(child2triples));
+            concat(resource().getChildren().map(child2triples));
         }
     }
 

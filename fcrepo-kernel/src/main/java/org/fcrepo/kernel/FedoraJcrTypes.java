@@ -17,9 +17,7 @@ package org.fcrepo.kernel;
 
 import static java.util.Arrays.asList;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Convenience class with constants for commonly used JCR types.

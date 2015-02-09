@@ -337,7 +337,7 @@ public class FedoraResourceImplTest {
     @Test
     public void testGetChildrenWithEmptyChildren() throws RepositoryException {
         when(mockNode.getNodes()).thenReturn(nodeIterator());
-        final Iterator<FedoraResource> children = testObj.getChildren();
+        final Iterator<FedoraResource> children = testObj.getChildren().iterator();
 
         assertFalse("Expected an empty iterator", children.hasNext());
     }
@@ -351,7 +351,7 @@ public class FedoraResourceImplTest {
         when(mockChild.getNodes()).thenReturn(nodeIterator());
         when(mockChild.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockChild.isNodeType(Mockito.any(String.class))).thenReturn(false);
-        final Iterator<FedoraResource> children = testObj.getChildren();
+        final Iterator<FedoraResource> children = testObj.getChildren().iterator();
 
         assertTrue("Expected an iterator with values", children.hasNext());
         assertEquals("Expected to find the child", mockChild, children.next().getNode());
@@ -362,7 +362,7 @@ public class FedoraResourceImplTest {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.isNodeType("mode:system")).thenReturn(true);
         when(mockChild.getName()).thenReturn("x");
-        final Iterator<FedoraResource> children = testObj.getChildren();
+        final Iterator<FedoraResource> children = testObj.getChildren().iterator();
         assertFalse("Expected an empty iterator", children.hasNext());
     }
 
@@ -371,7 +371,7 @@ public class FedoraResourceImplTest {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
         when(mockChild.getName()).thenReturn("x");
-        final Iterator<FedoraResource> children = testObj.getChildren();
+        final Iterator<FedoraResource> children = testObj.getChildren().iterator();
         assertFalse("Expected an empty iterator", children.hasNext());
     }
 
@@ -379,7 +379,7 @@ public class FedoraResourceImplTest {
     public void testGetChildrenExcludesJcrContent() throws RepositoryException {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.getName()).thenReturn(JCR_CONTENT);
-        final Iterator<FedoraResource> children = testObj.getChildren();
+        final Iterator<FedoraResource> children = testObj.getChildren().iterator();
         assertFalse("Expected an empty iterator", children.hasNext());
     }
 

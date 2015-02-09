@@ -254,8 +254,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             // Embed the children of this object
             if (ldpPreferences.prefersEmbed()) {
-                final Iterator<FedoraResource> children = resource().getChildren();
-                rdfStream.concat(fromIterator(children).flatMap(
+                rdfStream.concat(resource().getChildren().flatMap(
                         child -> child.getTriples(translator(), ImmutableList.of(
                                 TypeRdfContext.class, PropertiesRdfContext.class, BlankNodeRdfContext.class)))
                         .filter(tripleFilter));

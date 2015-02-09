@@ -120,29 +120,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @see org.fcrepo.kernel.models.FedoraResource#getChildren()
      */
     @Override
-    public Iterator<FedoraResource> getChildren() {
-        try {
-            return nodeToGoodChildren(node).flatMap(identity()).iterator();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+    public Stream<FedoraResource> getChildren() {
+        return nodeToGoodChildren(node).flatMap(identity());
     }
 
     /**
      * Get the "good" children for a node by skipping all pairtree nodes in the way.
      * @param node
      * @return
-     * @throws RepositoryException
      */
-    private Stream<Stream<FedoraResource>> nodeToGoodChildren(final Node node) throws RepositoryException {
-        final Iterator<Node> allChildren = node.getNodes();
-        final Stream<Node> goodChildren = fromIterator(allChildren).filter(nastyChildren.negate());
-        return goodChildren.map(UncheckedFunction.uncheck((final Node n) -> {
-            if (n.isNodeType(FEDORA_PAIRTREE)) {
-                return nodeToGoodChildren(n).flatMap(identity());
-            }
-            return Stream.of(nodeToObjectBinaryConverter.convert(n));
-        }));
+    private Stream<Stream<FedoraResource>> nodeToGoodChildren(final Node node) {
+        try {
+            final Iterator<Node> allChildren = node.getNodes();
+            final Stream<Node> goodChildren = fromIterator(allChildren).filter(nastyChildren.negate());
+            return goodChildren.map(UncheckedFunction.uncheck((final Node n) -> {
+                if (n.isNodeType(FEDORA_PAIRTREE)) {
+                    return nodeToGoodChildren(n).flatMap(identity());
+                }
+                return Stream.of(nodeToObjectBinaryConverter.convert(n));
+            }));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
     /**
      * Children for whom we will not generate triples.
