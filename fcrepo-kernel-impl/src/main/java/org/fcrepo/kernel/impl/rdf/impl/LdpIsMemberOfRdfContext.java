@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -33,6 +34,7 @@ import java.util.stream.Stream;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Arrays.asList;
+import static java.util.stream.Stream.empty;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
@@ -50,39 +52,41 @@ import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropert
  * @since 10/7/14
  */
 public class LdpIsMemberOfRdfContext extends NodeRdfContext {
-    private final ValueConverter valueConverter;
 
     private static final List<Integer> PROPERTY_TYPES = asList(REFERENCE, WEAKREFERENCE, PATH);
 
     /**
      * Default constructor.
      *
-     * @param resource the resource
-     * @param idTranslator the id translator
-     * @throws javax.jcr.RepositoryException if repository exception
+     * @param resource
+     * @param idTranslator
      */
     public LdpIsMemberOfRdfContext(final FedoraResource resource,
-                                   final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+                                   final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
-        this.valueConverter = new ValueConverter(session(), translator());
-        final FedoraResource container = resource.getContainer();
+
+    }
+
+    @Override
+    public Stream<Triple> applyThrows(final javax.jcr.Node unused) throws RepositoryException {
+        final FedoraResource container = resource().getContainer();
 
         if (container != null &&
                 (container.hasType(LDP_DIRECT_CONTAINER) || container.hasType(LDP_INDIRECT_CONTAINER)) &&
                 container.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
-            concatIsMemberOfRelation(container);
+            return isMemberOfRelation(container);
         }
+        return empty();
     }
 
-    private void concatIsMemberOfRelation(final FedoraResource container) throws RepositoryException {
+    private Stream<Triple> isMemberOfRelation(final FedoraResource container) throws RepositoryException {
         final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
 
         final Node memberRelation = createResource(property.getString()).asNode();
         final Node membershipResource = getMemberResource(container).asNode();
 
         if (membershipResource == null) {
-            return;
+            return empty();
         }
 
         final String insertedContainerProperty;
@@ -91,32 +95,33 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
             if (container.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {
                 insertedContainerProperty = container.getProperty(LDP_INSERTED_CONTENT_RELATION).getString();
             } else {
-                return;
+                return empty();
             }
         } else {
             insertedContainerProperty = MEMBER_SUBJECT.getURI();
         }
 
         if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
-            concat(create(subject(), memberRelation, membershipResource));
-        } else if (container.hasType(LDP_INDIRECT_CONTAINER)) {
-            final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(), createResource
-                    (insertedContainerProperty), null);
+            return Stream.of(create(topic(), memberRelation, membershipResource));
+        }
+        if (container.hasType(LDP_INDIRECT_CONTAINER)) {
+            final String insertedContentProperty =
+                    getPropertyNameFromPredicate(node(), createResource(insertedContainerProperty), null);
 
             if (!resource().hasProperty(insertedContentProperty)) {
-                return;
+                return empty();
             }
 
-            final PropertyValueStream values
-                    = new PropertyValueStream(resource().getProperty(insertedContentProperty));
+            final PropertyValueStream values =
+                    new PropertyValueStream(resource().getProperty(insertedContentProperty));
 
             final Stream<RDFNode> insertedContentRelations =
-                    values.map( valueConverter).filter(
+                    values.map(new ValueConverter(session(), translator())).filter(
                             n -> n.isURIResource() && translator().inDomain(n.asResource()));
 
-            concat(insertedContentRelations.map(n -> create(n.asNode(), memberRelation, membershipResource)));
-
+            return insertedContentRelations.map(n -> create(n.asNode(), memberRelation, membershipResource));
         }
+        return empty();
     }
 
     /**

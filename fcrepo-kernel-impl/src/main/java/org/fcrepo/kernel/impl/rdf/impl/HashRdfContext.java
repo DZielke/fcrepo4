@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.ImmutableList.of;
+import static java.util.stream.Stream.empty;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.utils.Streams.fromIterator;
 
@@ -44,20 +46,21 @@ public class HashRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param resource the resource
-     * @param idTranslator the id translator
-     * @throws javax.jcr.RepositoryException if repository exception occurred
+     * @param resource
+     * @param idTranslator
      */
     public HashRdfContext(final FedoraResource resource,
-            final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+            final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
+    }
 
-        final Node node = resource().getNode();
+    @Override
+    public Stream<Triple> applyThrows(final Node node) throws RepositoryException {
         if (node.hasNode("#")) {
             final Iterator<Node> hashChildrenNodesIterator = node.getNode("#").getNodes();
             final Stream<Node> hashChildren = fromIterator(hashChildrenNodesIterator);
-            concat(hashChildren.flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator, TRIPLE_GENERATORS)));
+            return hashChildren.flatMap(n -> nodeConverter.convert(n).getTriples(translator(), TRIPLE_GENERATORS));
         }
+        return empty();
     }
 }

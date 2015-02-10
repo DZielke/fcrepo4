@@ -129,7 +129,7 @@ public class LdpIsMemberOfRdfContextTest {
     }
 
     @Test
-    public void testIsMemberOfRelationWithRootResource() throws RepositoryException {
+    public void testIsMemberOfRelationWithRootResource() {
         testObj = new LdpIsMemberOfRdfContext(mockContainer, subjects);
 
         final Model model = testObj.asModel();
@@ -138,7 +138,7 @@ public class LdpIsMemberOfRdfContextTest {
     }
 
     @Test
-    public void testIsMemberOfRelationWithoutIsMemberOfResource() throws RepositoryException {
+    public void testIsMemberOfRelationWithoutIsMemberOfResource() {
         testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
         final Model model = testObj.asModel();

@@ -15,12 +15,17 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+
 import java.security.AccessControlException;
+import java.util.stream.Stream;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -29,34 +34,31 @@ import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/1/14
  */
 public class AclRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param resource the resource
-     * @param idTranslator the property of idTranslator
-     * @throws javax.jcr.RepositoryException if repository exception occurred
+     * @param resource
+     * @param idTranslator
      */
     public AclRdfContext(final FedoraResource resource,
-                         final IdentifierConverter<Resource, FedoraResource> idTranslator) throws RepositoryException {
+                         final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
-
-        // include writable status
-        concatWritable();
     }
 
-    private void concatWritable() throws RepositoryException {
-        boolean writable = false;
+    @Override
+    public Stream<Triple> applyThrows(final Node node) throws RepositoryException {
+        Boolean writable = false;
         try {
-            resource().getNode().getSession().checkPermission( resource().getPath(), "add_node,set_property,remove" );
+            session().checkPermission(resource().getPath(), "add_node,set_property,remove");
             writable = true;
-        } catch ( AccessControlException ex ) {
+        } catch (final AccessControlException ex) {
             writable = false;
         }
-
-        concat(create(subject(), WRITABLE.asNode(), createLiteral(String.valueOf(writable), XSDboolean)));
+        return Stream.of(create(topic(), WRITABLE.asNode(), createLiteral(writable.toString(), XSDboolean)));
     }
 
 }

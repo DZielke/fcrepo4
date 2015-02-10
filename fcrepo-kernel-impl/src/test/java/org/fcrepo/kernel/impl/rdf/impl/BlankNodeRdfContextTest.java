@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -42,6 +43,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BLANKNODE;
+import static org.fcrepo.kernel.impl.rdf.impl.EmptyPropertyIterator.EMPTY_PROPERTY_ITERATOR;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -56,40 +58,16 @@ public class BlankNodeRdfContextTest {
     private FedoraResource mockResource;
 
     @Mock
-    private Node mockNode;
+    private Node mockNode, mockBlankNode, mockNestedBlankNode, mockOtherNode;
 
     @Mock
     private Session mockSession;
 
     @Mock
-    private Node mockBlankNode;
+    private Property mockProperty, mockReferenceProperty, mockBnodeReferenceProperty,mockOtherBnodeReferenceProperty;
 
     @Mock
-    private Node mockNestedBlankNode;
-
-    @Mock
-    private Node mockOtherNode;
-
-    @Mock
-    private Property mockProperty;
-
-    @Mock
-    private Property mockReferenceProperty;
-
-    @Mock
-    private Property mockBnodeReferenceProperty;
-
-    @Mock
-    private Property mockOtherBnodeReferenceProperty;
-
-    @Mock
-    private Value mockReferenceValue;
-
-    @Mock
-    private Value mockBnodeValue;
-
-    @Mock
-    private Value mockOtherBnodeValue;
+    private Value mockReferenceValue, mockBnodeValue, mockOtherBnodeValue;
 
     @Mock
     private NodeType mockNodeType;
@@ -112,7 +90,6 @@ public class BlankNodeRdfContextTest {
         initMocks(this);
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockResource.getPath()).thenReturn("/x");
-
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockBlankNode.getSession()).thenReturn(mockSession);
         when(mockOtherNode.getSession()).thenReturn(mockSession);
@@ -159,7 +136,7 @@ public class BlankNodeRdfContextTest {
 
     @Test
     public void testWithoutProperties() throws RepositoryException {
-        when(mockNode.getProperties()).thenReturn(new TestPropertyIterator());
+        when(mockNode.getProperties()).thenReturn(EMPTY_PROPERTY_ITERATOR);
         testObj = new BlankNodeRdfContext(mockResource, subjects);
         assertTrue("Expected no triples", testObj.asModel().isEmpty());
     }

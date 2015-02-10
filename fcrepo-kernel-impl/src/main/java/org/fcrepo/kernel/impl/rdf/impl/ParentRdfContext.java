@@ -15,16 +15,21 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import java.util.stream.Stream;
+
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 
 import static com.hp.hpl.jena.graph.Triple.create;
+import static java.util.stream.Stream.empty;
 import static org.fcrepo.kernel.FedoraJcrTypes.VERSIONABLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -41,22 +46,23 @@ public class ParentRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param resource the resource
-     * @param idTranslator the id translator
-     * @throws javax.jcr.RepositoryException if repository exception occurred
+     * @param resource
+     * @param idTranslator
      */
     public ParentRdfContext(final FedoraResource resource,
-                            final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+                            final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
+    }
 
-        if (resource.getNode().getDepth() > 0 && (!resource().isFrozenResource() ||
-                !resource().getUnfrozenResource().hasType(VERSIONABLE))) {
+    @Override
+    public Stream<Triple> applyThrows(final javax.jcr.Node node) throws RepositoryException {
+        if (node.getDepth() > 0 &&
+                (!resource().isFrozenResource() || !resource().getUnfrozenResource().hasType(VERSIONABLE))) {
             LOGGER.trace("Determined that this resource has an appropriate parent.");
             final FedoraResource container = resource().getContainer();
-            final Resource subject = translator().reverse().convert(container);
-            final Node containerSubject = subject.asNode();
-            concat(create(subject(), HAS_PARENT.asNode(), containerSubject));
+            final Node containerSubject = translator().reverse().convert(container).asNode();
+            return Stream.of(create(topic(), HAS_PARENT.asNode(), containerSubject));
         }
+        return empty();
     }
 }

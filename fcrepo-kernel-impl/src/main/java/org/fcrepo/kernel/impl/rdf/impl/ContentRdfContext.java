@@ -16,8 +16,11 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import static com.hp.hpl.jena.graph.Triple.create;
+import static java.util.stream.Stream.empty;
 import static org.fcrepo.kernel.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.RdfLexicon.DESCRIBED_BY;
+
+import java.util.stream.Stream;
 
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
@@ -25,10 +28,12 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/16/14
  */
 public class ContentRdfContext extends NodeRdfContext {
@@ -41,21 +46,25 @@ public class ContentRdfContext extends NodeRdfContext {
     public ContentRdfContext(final FedoraResource resource,
                              final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
+    }
 
-        // if there's an accessible jcr:content node, include information about
-        // it
-        if (resource instanceof NonRdfSourceDescription) {
+    @Override
+    public Stream<Triple> applyThrows(final javax.jcr.Node unused) {
+
+        if (resource() instanceof NonRdfSourceDescription) {
+            // if this resource describes a bitstream
             final FedoraResource contentNode = ((NonRdfSourceDescription) resource()).getDescribedResource();
-            final Node subject = translator().reverse().convert(resource()).asNode();
             final Node contentSubject = translator().reverse().convert(contentNode).asNode();
             // add triples representing parent-to-content-child relationship
-            concat(create(subject, DESCRIBES.asNode(), contentSubject));
-
-        } else if (resource instanceof FedoraBinary) {
-            final FedoraResource description = ((FedoraBinary) resource).getDescription();
-            concat(create(translator().reverse().convert(resource).asNode(),
-                    DESCRIBED_BY.asNode(),
-                    translator().reverse().convert(description).asNode()));
+            return Stream.of(create(topic(), DESCRIBES.asNode(), contentSubject));
         }
+        if (resource() instanceof FedoraBinary) {
+            // if this resource is a bitstream
+            final FedoraResource description = ((FedoraBinary) resource()).getDescription();
+            final Node descriptionUri = translator().reverse().convert(description).asNode();
+            return Stream.of(create(topic(), DESCRIBED_BY.asNode(), descriptionUri));
+        }
+        return empty();
     }
+
 }

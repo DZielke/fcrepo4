@@ -60,7 +60,7 @@ public class AclRdfContextTest {
     private Session mockSession;
 
     private Resource nodeSubject;
-    private String path = "/path/to/node";
+    private final String path = "/path/to/node";
 
     @Before
     public void setUp() throws RepositoryException {
@@ -75,7 +75,7 @@ public class AclRdfContextTest {
     }
 
     @Test
-    public void testWritableNode() throws RepositoryException {
+    public void testWritableNode() {
         final Model actual = new AclRdfContext(resource, idTranslator).asModel();
         final Literal booleanTrue = actual.createTypedLiteral("true", XSDboolean);
         assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanTrue));

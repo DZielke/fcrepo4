@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.utils;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.function.Function.identity;
 import static java.util.stream.StreamSupport.stream;
 
 import java.util.Iterator;
@@ -32,6 +33,11 @@ public class Streams {
 
     public static <T> Stream<T> fromIterator(final Iterator<T> i) {
         return stream(spliteratorUnknownSize(i, 0), false);
+    }
+
+    @SafeVarargs
+    public static <T> Stream<T> flatten(final Stream<T>... streams) {
+        return Stream.of(streams).flatMap(identity());
     }
 
 }

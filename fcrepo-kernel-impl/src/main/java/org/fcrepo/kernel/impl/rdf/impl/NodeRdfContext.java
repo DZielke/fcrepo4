@@ -18,16 +18,19 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import static java.util.Objects.nonNull;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 
+import java.util.stream.Stream;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.utils.UncheckedFunction;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import com.google.common.base.Converter;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -36,14 +39,13 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  * @since Oct 10, 2013
  */
-public class NodeRdfContext extends RdfStream {
+public abstract class NodeRdfContext extends RdfStream implements UncheckedFunction<Node, Stream<Triple>>{
 
     private final FedoraResource resource;
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private final com.hp.hpl.jena.graph.Node subject;
-
+    private final Node node;
 
     /**
      * Default constructor.
@@ -55,18 +57,19 @@ public class NodeRdfContext extends RdfStream {
                           final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super();
         this.resource = resource;
-
-        final Node node = resource().getNode();
-        if (nonNull(node)) {
+        this.node = resource().getNode();
+        if (nonNull(node())) {
             try {
-                session(node.getSession());
+                session(node().getSession());
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
         }
 
         this.idTranslator = idTranslator;
-        this.subject = idTranslator.reverse().convert(resource).asNode();
+        topic(translator().reverse().convert(resource()).asNode());
+        // this slightly odd locution develops our triples lazily instead of at constructor execution
+        concat(Stream.of(node()).flatMap(this));
     }
 
     /**
@@ -91,9 +94,9 @@ public class NodeRdfContext extends RdfStream {
     }
 
     /**
-     * @return the RDF subject at the center of this context
+     * @return the JCR node that is contextual for this stream of triples
      */
-    public com.hp.hpl.jena.graph.Node subject() {
-        return subject;
+    public Node node() {
+        return node;
     }
 }

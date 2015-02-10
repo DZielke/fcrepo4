@@ -28,10 +28,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
@@ -39,10 +37,10 @@ import javax.jcr.version.VersionHistory;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 import org.slf4j.Logger;
@@ -68,34 +66,31 @@ public class VersionsRdfContext extends NodeRdfContext {
     public VersionsRdfContext(final FedoraResource resource,
                               final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
-        try {
-            final Iterator<Version> allVersions = resource().getVersionHistory().getAllVersions();
-            final Stream<Version> versionsStream = fromIterator(allVersions);
-            concat(versionsStream.flatMap(version2triples));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
-    private final Function<Version, Stream<Triple>> version2triples =
-            uncheck(version -> {
-                final VersionHistory versionHistory = resource().getVersionHistory();
-                /* Discard jcr:rootVersion */
+    @Override
+    public Stream<Triple> applyThrows(final javax.jcr.Node unused) throws RepositoryException {
+        final Iterator<Version> allVersions = resource().getVersionHistory().getAllVersions();
+        final Stream<Version> versionsStream = fromIterator(allVersions);
+        return versionsStream.flatMap(uncheck(version -> {
+            final VersionHistory versionHistory = resource().getVersionHistory();
+            /* Discard jcr:rootVersion */
                 if (version.getName().equals(versionHistory.getRootVersion().getName())) {
-                    LOGGER.trace("Skipped root version from triples");
+                    LOGGER.trace("Skipped root version");
                     return new RdfStream();
                 }
 
-                final Node frozenNode = version.getFrozenNode();
-                final com.hp.hpl.jena.graph.Node versionSubject =
-                        nodeToResource(translator()).convert(frozenNode).asNode();
+                final javax.jcr.Node frozenNode = version.getFrozenNode();
+                final Node versionSubject = nodeToResource(translator()).convert(frozenNode).asNode();
 
                 final RdfStream results =
-                        new RdfStream(create(subject(), HAS_VERSION.asNode(), versionSubject),
+                        new RdfStream(create(topic(), HAS_VERSION.asNode(), versionSubject),
                                 create(versionSubject, CREATED_DATE.asNode(),
                                         createTypedLiteral(version.getCreated()).asNode()));
                 results.concat(Arrays.stream(versionHistory.getVersionLabels(version)).map(
-                        label -> create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(label))));
+                        label -> createLiteral(label)).map(
+                        label -> create(versionSubject, HAS_VERSION_LABEL.asNode(), label)));
                 return results;
-            });
+            }));
+    }
 }

@@ -129,8 +129,7 @@ public class TypeRdfContextTest {
     }
 
     @Test
-    public void testRdfTypesForNodetypes() throws RepositoryException,
-            IOException {
+    public void testRdfTypesForNodetypes() throws IOException {
 
         final Resource mockNodeSubject = idTranslator.reverse().convert(mockResource);
 

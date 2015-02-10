@@ -20,7 +20,10 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraResource;
+<<<<<<< HEAD
 
+=======
+>>>>>>> Further lazi-fying RDF generation
 import org.fcrepo.kernel.utils.UncheckedPredicate;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
@@ -95,10 +98,13 @@ public class LdpContainerRdfContext extends NodeRdfContext {
     });
 >>>>>>> Minor code cleanup
 
+<<<<<<< HEAD
     private final Function<Property, Stream<Triple>> property2triples = uncheck(p -> memberRelations(nodeConverter
             .convert(p.getParent())));
 >>>>>>> Further propagation of the Streams API
 
+=======
+>>>>>>> Further lazi-fying RDF generation
     /**
      * Get the member relations assert on the subject by the given node
      * @param container
@@ -131,12 +137,16 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Further lazi-fying RDF generation
         return container.getChildren().flatMap(uncheck(child -> {
 
             final FedoraResource childResource =
                     child instanceof NonRdfSourceDescription ? ((NonRdfSourceDescription) child)
                             .getDescribedResource() : child;
             final com.hp.hpl.jena.graph.Node childSubject = translator().reverse().convert(childResource).asNode();
+<<<<<<< HEAD
 
             if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
                 return Stream.of(create(topic(), memberRelation, childSubject));
@@ -191,6 +201,11 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
                 return Stream.of(create(subject(), memberRelation, childSubject));
 >>>>>>> Minor code cleanup
+=======
+
+            if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
+                return Stream.of(create(topic(), memberRelation, childSubject));
+>>>>>>> Further lazi-fying RDF generation
             }
             final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
                     createResource(insertedContainerProperty), null);
@@ -210,10 +225,15 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             final Stream<Value> values = fromIterator(valuesIterator);
 =======
             final Stream<Value> values = new PropertyValueStream(child.getProperty(insertedContentProperty));
+<<<<<<< HEAD
 >>>>>>> Stream-ifying Property-Value conversion
             return values.map(v -> create(subject(), memberRelation, new ValueConverter(session(),
                     translator()).convert(v).asNode()));
 >>>>>>> Minor code cleanup
+=======
+            return values.map(v -> new ValueConverter(session(), translator()).convert(v).asNode()).map(
+                    o -> create(topic(), memberRelation, o));
+>>>>>>> Further lazi-fying RDF generation
         }));
     }
 }

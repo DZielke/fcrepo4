@@ -17,16 +17,19 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import static org.fcrepo.kernel.utils.Streams.fromIterator;
 
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
 
+import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  * Accumulate inbound references to a given resource
@@ -36,24 +39,23 @@ import java.util.Iterator;
  */
 public class ReferencesRdfContext extends NodeRdfContext {
 
-    private final PropertyToTriple property2triple;
-
     /**
      * Add the inbound references from other nodes to this resource to the stream
      *
-     * @param resource the resource
-     * @param idTranslator the id translator
-     * @throws RepositoryException if repository exception occurred
+     * @param resource
+     * @param idTranslator
      */
 
     public ReferencesRdfContext(final FedoraResource resource,
-                                final IdentifierConverter<Resource, FedoraResource> idTranslator)
-        throws RepositoryException {
+                                final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
-        this.property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        final Iterator<Property> strongRefs = resource().getNode().getReferences();
-        concat(fromIterator(strongRefs).flatMap(property2triple));
-        final Iterator<Property> weakRefs = resource().getNode().getWeakReferences();
-        concat(fromIterator(weakRefs).flatMap(property2triple));
+    }
+
+    @Override
+    public Stream<Triple> applyThrows(final Node node) throws RepositoryException {
+        final Iterator<Property> strongRefs = node.getReferences();
+        final Iterator<Property> weakRefs = node.getWeakReferences();
+        return Stream.concat(fromIterator(strongRefs), fromIterator(weakRefs)).flatMap(
+                new PropertyToTriple(session(), translator()));
     }
 }

@@ -42,6 +42,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
@@ -76,32 +77,35 @@ public class RootRdfContext extends NodeRdfContext {
     /**
      * Ordinary constructor.
      *
-     * @param resource the resource
-     * @param idTranslator the id translator
-     * @throws RepositoryException if repository exception occurred
+     * @param resource
+     * @param idTranslator
      */
     public RootRdfContext(final FedoraResource resource,
-            final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+            final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
+    }
 
+    @Override
+    public Stream<Triple> applyThrows(final Node unused) throws RepositoryException {
+
+        final Stream.Builder<Triple> triples = Stream.builder();
         if (resource().hasType(ROOT)) {
             LOGGER.trace("Creating RDF triples for repository description");
-            final Repository repository = resource().getNode().getSession().getRepository();
+            final Repository repository = session().getRepository();
 
             final Map<String, String> descriptors = Arrays.stream(repository.getDescriptorKeys())
                     .filter(key -> nonNull(repository.getDescriptor(key)))
-                    .collect(toMap((key) -> REPOSITORY_NAMESPACE + "repository." + key, repository::getDescriptor));
+                    .collect(toMap(key -> REPOSITORY_NAMESPACE + "repository." + key, repository::getDescriptor));
             LOGGER.debug("Using repository descriptors: {}", descriptors);
-            concat(descriptors.entrySet().stream().map(entry -> create(subject(), createURI(entry.getKey()),
-                    createLiteral(entry.getValue()))).iterator());
+            descriptors.entrySet().stream().map(entry -> create(topic(), createURI(entry.getKey()),
+                    createLiteral(entry.getValue()))).forEach(triples::add);
 
-
-            final NodeTypeManager nodeTypeManager =
-                    resource().getNode().getSession().getWorkspace().getNodeTypeManager();
+            final NodeTypeManager nodeTypeManager = session().getWorkspace().getNodeTypeManager();
             final Iterator<NodeType> allNodeTypes = nodeTypeManager.getAllNodeTypes();
             final Stream<NodeType> nodeTypes = fromIterator(allNodeTypes);
-            concat(nodeTypes.map(type -> create(subject(), HAS_NODE_TYPE.asNode(), createLiteral(type.getName()))));
+
+            nodeTypes.map(NodeType::getName).map(t -> create(topic(), HAS_NODE_TYPE.asNode(), createLiteral(t)))
+                    .forEach(triples::add);
 
             /*
              * FIXME: removing because performance problems, esp. w/ many files on federated filesystem see:
@@ -115,30 +119,29 @@ public class RootRdfContext extends NodeRdfContext {
             if (JcrRepository.class.isAssignableFrom(repository.getClass())) {
                 final Map<String, String> config = new GetClusterConfiguration().apply(repository);
                 assert (config != null);
-                concat(config.entrySet().stream().map(
-                        entry -> create(subject(), createURI(REPOSITORY_NAMESPACE + entry.getKey()),
-                                createLiteral(entry.getValue()))));
+                config.entrySet().stream().map(
+                        entry -> create(topic(), createURI(REPOSITORY_NAMESPACE + entry.getKey()),
+                                createLiteral(entry.getValue()))).forEach(triples::add);
             }
 
             // retrieve the repository metrics from the service
             final Map<String, Counter> counters = registryService.getMetrics().getCounters();
             // and add the metrics to the RDF model
             if (counters.containsKey("LowLevelStorageService.fixity-check-counter")) {
-                concat(create(subject(), HAS_FIXITY_CHECK_COUNT.asNode(),
-                        createTypedLiteral(
-                                counters.get(CHECK_COUNTER_KEY).getCount()).asNode()));
+                triples.add(create(topic(), HAS_FIXITY_CHECK_COUNT.asNode(),
+                        createTypedLiteral(counters.get(CHECK_COUNTER_KEY).getCount()).asNode()));
             }
 
             if (counters.containsKey("LowLevelStorageService.fixity-error-counter")) {
-                concat(create(subject(), HAS_FIXITY_ERROR_COUNT.asNode(),
+                triples.add(create(topic(), HAS_FIXITY_ERROR_COUNT.asNode(),
                         createTypedLiteral(counters.get(ERROR_COUNTER_KEY).getCount()).asNode()));
             }
 
             if (counters.containsKey("LowLevelStorageService.fixity-repaired-counter")) {
-                concat(create(subject(), HAS_FIXITY_REPAIRED_COUNT.asNode(),
-                        createTypedLiteral(
-                                counters.get(REPAIRED_COUNTER_KEY).getCount()).asNode()));
+                triples.add(create(topic(), HAS_FIXITY_REPAIRED_COUNT.asNode(),
+                        createTypedLiteral(counters.get(REPAIRED_COUNTER_KEY).getCount()).asNode()));
             }
         }
+        return triples.build();
     }
 }

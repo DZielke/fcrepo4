@@ -16,6 +16,8 @@
 
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import com.google.common.collect.ImmutableList;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.models.FedoraResource;
@@ -26,11 +28,8 @@ import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueStream;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-import javax.jcr.Value;
-
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -53,39 +52,39 @@ import static org.fcrepo.kernel.utils.UncheckedFunction.uncheck;
  */
 public class BlankNodeRdfContext extends NodeRdfContext {
 
+    private static final ImmutableList<Class<? extends NodeRdfContext>> TRIPLE_GENERATORS = of(TypeRdfContext.class,
+            PropertiesRdfContext.class,
+            BlankNodeRdfContext.class);
+
     private static final List<Integer> referencePropertyTypes = asList(PATH, REFERENCE, WEAKREFERENCE);
 
     /**
      * Default constructor.
      *
-     * @param resource the resource
-     * @param idTranslator the idTranslator
-     * @throws javax.jcr.RepositoryException if repository exception occurred
+     * @param resource
+     * @param idTranslator
      */
     public BlankNodeRdfContext(final FedoraResource resource,
-            final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+            final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
-
-        concat(getBlankNodesIterator().flatMap(node -> {
-            final FedoraResource res = nodeConverter.convert(node);
-
-            return res.getTriples(idTranslator, of(TypeRdfContext.class,
-                    PropertiesRdfContext.class,
-                    BlankNodeRdfContext.class));
-        }
-                ));
     }
 
-    private Stream<Node> getBlankNodesIterator() throws RepositoryException {
-        final Iterator<Property> propertiesIterator = resource().getNode().getProperties();
+    @Override
+    public Stream<Triple> applyThrows(final Node node) throws RepositoryException {
+        return getBlankNodesIterator(node).flatMap(
+                n -> nodeConverter.convert(n).getTriples(translator(), TRIPLE_GENERATORS));
+    }
+
+    private Stream<Node> getBlankNodesIterator(final Node n) throws RepositoryException {
+        final Iterator<Property> propertiesIterator = n.getProperties();
         final Stream<Property> references = fromIterator(propertiesIterator).filter(filterReferenceProperties);
-        return new PropertyValueStream(references).map(getNodesForValue).filter(isBlankNode);
+        return new PropertyValueStream(references)
+                .map(uncheck(v ->
+                        v.getType() == PATH ? session().getNode(v.getString()) : session().getNodeByIdentifier(
+                                v.getString()))).filter(isBlankNode);
     }
 
     private static final Predicate<Property> filterReferenceProperties = UncheckedPredicate
             .uncheck(p -> referencePropertyTypes.contains(p.getType()));
 
-    private final Function<Value, Node> getNodesForValue = uncheck(v ->
-            v.getType() == PATH ? session().getNode(v.getString()) : session().getNodeByIdentifier(v.getString()));
 }

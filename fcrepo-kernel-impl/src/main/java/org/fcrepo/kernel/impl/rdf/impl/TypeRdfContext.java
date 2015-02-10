@@ -29,14 +29,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 
 import java.util.Arrays;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static java.util.function.Function.identity;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.utils.Streams.flatten;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -52,41 +51,39 @@ public class TypeRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param resource the resource
-     * @param idTranslator the id translator
-     * @throws RepositoryException if repository exception occurred
+     * @param resource
+     * @param idTranslator
      */
     public TypeRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
-
-        final Node node = resource().getNode();
-        final NodeType primaryNodeType = node.getPrimaryNodeType();
-        final NodeType[] mixins = node.getMixinNodeTypes();
-        final Stream<NodeType> allTypes =
-                Stream.of(Stream.of(primaryNodeType), Stream.of(primaryNodeType.getSupertypes()), Stream.of(mixins),
-                        Stream.of(mixins).flatMap(t -> Arrays.stream(t.getSupertypes()))).flatMap(identity());
-        concat(allTypes.map(nodetype2triple));
     }
 
-    private final Function<NodeType, Triple> nodetype2triple =
-            nodeType -> {
-                final String fullTypeName = nodeType.getName();
-                LOGGER.trace("Translating JCR mixin name: {}", fullTypeName);
-                final String prefix = fullTypeName.split(":")[0];
-                final String typeName = fullTypeName.split(":")[1];
-                final String namespace = getJcrUri(prefix);
-                LOGGER.trace("with JCR namespace: {}", namespace);
-                final com.hp.hpl.jena.graph.Node rdfType =
-                        createURI(getRDFNamespaceForJcrNamespace(namespace) + typeName);
-                LOGGER.trace("into RDF resource: {}", rdfType);
-                return create(subject(), type.asNode(), rdfType);
-            };
+    @Override
+    public Stream<Triple> applyThrows(final Node node) throws RepositoryException {
+        final NodeType primaryNodeType = node.getPrimaryNodeType();
+        final NodeType[] mixins = node.getMixinNodeTypes();
+        final Stream<NodeType> mixinSupertypes = Stream.of(mixins).map(NodeType::getSupertypes).flatMap(Arrays::stream);
+        final Stream<NodeType> primarySupertypes = Stream.of(primaryNodeType.getSupertypes());
+        final Stream<NodeType> allTypes =
+                flatten(Stream.of(primaryNodeType), primarySupertypes, Stream.of(mixins), mixinSupertypes);
+        return allTypes.map(nodeType -> {
+            final String fullTypeName = nodeType.getName();
+            LOGGER.trace("Translating mixin name: {}", fullTypeName);
+            final String prefix = fullTypeName.split(":")[0];
+            final String typeName = fullTypeName.split(":")[1];
+            final String namespace = getJcrUri(prefix);
+            LOGGER.trace("with namespace: {}", namespace);
+            final com.hp.hpl.jena.graph.Node rdfType =
+                    createURI(getRDFNamespaceForJcrNamespace(namespace) + typeName);
+            LOGGER.trace("into RDF resource: {}", rdfType);
+            return create(topic(), type.asNode(), rdfType);
+        });
+    }
 
     private String getJcrUri(final String prefix) {
         try {
-            return resource().getNode().getSession().getWorkspace().getNamespaceRegistry().getURI(prefix);
+            return session().getWorkspace().getNamespaceRegistry().getURI(prefix);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
