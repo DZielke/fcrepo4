@@ -37,15 +37,12 @@ import java.util.stream.Stream;
  */
 public class PropertyValueStream extends SpliteratorStream<Value, PropertyValueStream> {
 
-    private Iterator<Value> currentValues;
-
     /**
      * Iterate through multiple properties' values
      * @param properties
      */
     public PropertyValueStream(final Iterator<Property> properties) {
         super(fromIterator(properties).flatMap(fanout));
-        this.currentValues = null;
     }
 
     /**
@@ -54,7 +51,6 @@ public class PropertyValueStream extends SpliteratorStream<Value, PropertyValueS
      */
     public PropertyValueStream(final Stream<Property> properties) {
         super(properties.flatMap(fanout));
-        this.currentValues = null;
     }
 
     /**
@@ -63,7 +59,6 @@ public class PropertyValueStream extends SpliteratorStream<Value, PropertyValueS
      */
     public PropertyValueStream(final Property property) {
         super(fanout.apply(property));
-        this.currentValues = null;
     }
 
     public PropertyValueStream(final Spliterator<? extends Value> elements) {
