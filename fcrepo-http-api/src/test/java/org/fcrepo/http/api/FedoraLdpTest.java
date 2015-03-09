@@ -19,7 +19,6 @@ import static com.google.common.base.Predicates.containsPattern;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
-
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -74,6 +73,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.io.IOUtils;
+
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -85,7 +85,9 @@ import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -651,7 +653,8 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c ."), null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
+        verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
+                any(Service.class));
     }
 
     @Test
@@ -683,7 +686,8 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c ."), null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockObject).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
+        verify(mockObject).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
+                any(Service.class));
     }
 
     @Test(expected = ClientErrorException.class)
@@ -766,7 +770,7 @@ public class FedoraLdpTest {
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"));
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockContainer).updateProperties(eq(idTranslator), eq("x"), any(RdfStream.class));
+        verify(mockContainer).updateProperties(eq(idTranslator), eq("x"), any(RdfStream.class), any(Service.class));
     }
 
     @Test
@@ -780,7 +784,8 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:b> _:c ."));
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
+        verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
+                any(Service.class));
     }
 
 
