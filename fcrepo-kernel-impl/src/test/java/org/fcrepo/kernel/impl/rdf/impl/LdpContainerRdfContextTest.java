@@ -45,6 +45,7 @@ import static org.fcrepo.kernel.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -220,7 +221,7 @@ public class LdpContainerRdfContextTest {
 
         final Model model = testObj.asModel();
 
-        assertTrue("Expected stream to have one triple", model.size() == 1);
+        assertEquals("Expected stream to have one triple", 1, model.size());
         assertTrue(model.contains(
                 subjects.reverse().convert(mockResource),
                 ResourceFactory.createProperty("some:property"),
@@ -238,6 +239,11 @@ public class LdpContainerRdfContextTest {
         when(mockContainerNode.getProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn
                 (mockInsertedContentRelationProperty);
         when(mockInsertedContentRelationProperty.getString()).thenReturn("some:relation");
+        final Value mockValue = mock(Value.class);
+        when(mockValue.getString()).thenReturn("some:relation");
+        when(mockInsertedContentRelationProperty.getValue()).thenReturn(mockValue);
+        when(mockInsertedContentRelationProperty.isMultiple()).thenReturn(false);
+
         when(mockNamespaceRegistry.isRegisteredUri("some:")).thenReturn(true);
         when(mockNamespaceRegistry.getPrefix("some:")).thenReturn("some");
         when(mockContainerNode.getNodes()).thenReturn(new TestNodeIterator(mockChild));
@@ -257,7 +263,7 @@ public class LdpContainerRdfContextTest {
 
         final Model model = testObj.asModel();
 
-        assertTrue("Expected stream to have one triple", model.size() == 1);
+        assertEquals("Expected stream to have one triple", 1, model.size());
         assertTrue(model.contains(
                 subjects.reverse().convert(mockResource),
                 ResourceFactory.createProperty("some:property"),
@@ -272,9 +278,11 @@ public class LdpContainerRdfContextTest {
         when(mockContainerNode.getSession()).thenReturn(mockSession);
         when(mockContainerNode.isNodeType(LDP_INDIRECT_CONTAINER)).thenReturn(true);
         when(mockContainerNode.hasProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn(true);
-        when(mockContainerNode.getProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn
-                (mockInsertedContentRelationProperty);
+        when(mockContainerNode.getProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn(mockInsertedContentRelationProperty);
+        when(mockInsertedContentRelationProperty.isMultiple()).thenReturn(false);
         when(mockInsertedContentRelationProperty.getString()).thenReturn("some:relation");
+        when(mockInsertedContentRelationProperty.getValue()).thenReturn(mockRelationValue);
+        when(mockRelationValue.getString()).thenReturn("some:relation");
         when(mockNamespaceRegistry.isRegisteredUri("some:")).thenReturn(true);
         when(mockNamespaceRegistry.getPrefix("some:")).thenReturn("some");
         when(mockContainerNode.getNodes()).thenReturn(new TestNodeIterator(mockChild));

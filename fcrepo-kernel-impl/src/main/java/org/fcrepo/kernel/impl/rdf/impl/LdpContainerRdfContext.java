@@ -25,6 +25,8 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueStream;
 
+import org.slf4j.Logger;
+
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -49,9 +51,9 @@ import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.utils.Streams.fromIterator;
 import static org.fcrepo.kernel.utils.UncheckedFunction.uncheck;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -59,6 +61,8 @@ import static org.fcrepo.kernel.utils.UncheckedFunction.uncheck;
  * @since 9/25/14
  */
 public class LdpContainerRdfContext extends NodeRdfContext {
+
+    private static final Logger log = getLogger(LdpContainerRdfContext.class);
 
     /**
      * Default constructor.
@@ -113,25 +117,35 @@ public class LdpContainerRdfContext extends NodeRdfContext {
         } else {
             insertedContainerProperty = MEMBER_SUBJECT.getURI();
         }
-
+        log.debug("Using inserted container property: {}", insertedContainerProperty);
         return container.getChildren().flatMap(uncheck(child -> {
 
             final FedoraResource childResource =
                     child instanceof NonRdfSourceDescription ? ((NonRdfSourceDescription) child)
                             .getDescribedResource() : child;
             final com.hp.hpl.jena.graph.Node childSubject = translator().reverse().convert(childResource).asNode();
-
+            log.debug("Operating over child resource: {}", childSubject);
             if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
+                log.debug("Inserted container property equals {}", MEMBER_SUBJECT);
                 return Stream.of(create(topic(), memberRelation, childSubject));
             }
-            final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
-                    createResource(insertedContainerProperty), null);
-
-            if (!child.hasProperty(insertedContentProperty)) {
+            String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
+                    createResource(insertedContainerProperty), namespaces());
+            log.debug("Looking for inserted content property: {}", insertedContentProperty);
+            if (child.hasProperty(insertedContentProperty)) {
+                log.debug("Using property {} directly.", insertedContentProperty);
+            } else if (child.hasProperty(getReferencePropertyName(insertedContentProperty))) {
+                // The insertedContentProperty is a pseudo reference property
+                insertedContentProperty = getReferencePropertyName(insertedContentProperty);
+                log.debug("Using property {} via reference.", insertedContentProperty);
+            } else {
+                log.debug("No property {} found directly or via reference.", insertedContentProperty);
                 return empty();
             }
-
-            final Stream<Value> values = new PropertyValueStream(child.getProperty(insertedContentProperty));
+            log.debug("Using values from inserted content property: {}", insertedContentProperty);
+            final Stream<Value> values =
+                    child.hasProperty(insertedContentProperty) ? new PropertyValueStream(child
+                            .getProperty(insertedContentProperty)) : empty();
             return values.map(v -> new ValueConverter(session(), translator()).convert(v).asNode()).map(
                     o -> create(topic(), memberRelation, o));
         }));

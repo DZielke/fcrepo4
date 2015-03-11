@@ -16,10 +16,12 @@
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
 import static org.fcrepo.kernel.utils.Streams.fromIterator;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.utils.UncheckedFunction;
 import org.fcrepo.kernel.utils.iterators.SpliteratorStream;
 
+import org.slf4j.Logger;
 import javax.jcr.Property;
 import javax.jcr.Value;
 
@@ -36,6 +38,8 @@ import java.util.stream.Stream;
  * @author ajs6f
  */
 public class PropertyValueStream extends SpliteratorStream<Value, PropertyValueStream> {
+
+    private static final Logger log = getLogger(PropertyValueStream.class);
 
     /**
      * Iterate through multiple properties' values
@@ -65,8 +69,9 @@ public class PropertyValueStream extends SpliteratorStream<Value, PropertyValueS
         super(elements);
     }
 
-    private static Function<Property, Stream<Value>> fanout = UncheckedFunction.uncheck(p ->
-            p.isMultiple() ? Arrays.stream(p.getValues()) : Stream.of(p.getValue()));
+    private static Function<Property, Stream<Value>> fanout = UncheckedFunction.uncheck(
+            p -> { log.debug("Fanning out values from property: {}", p);
+            return p.isMultiple() ? Arrays.stream(p.getValues()) : Stream.of(p.getValue());});
 
     @Override
     public PropertyValueStream withThisContext(final Spliterator<? extends Value> elements) {

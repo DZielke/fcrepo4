@@ -152,6 +152,7 @@ import com.hp.hpl.jena.vocabulary.DC_11;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class FedoraLdpIT extends AbstractResourceIT {
 
